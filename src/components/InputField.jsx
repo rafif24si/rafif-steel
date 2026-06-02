@@ -1,8 +1,13 @@
-export default function InputField({ label, name, type = "text", value, onChange, placeholder, required = false }) {
+import React, { forwardRef } from 'react';
+
+const InputField = forwardRef(({ label, name, type = "text", value, onChange, placeholder, required = false }, ref) => {
   return (
     <div className="mb-4">
-      <label htmlFor={name} className="block text-sm font-medium text-gray-700 mb-1">{label} {required && <span className="text-red-500">*</span>}</label>
+      <label htmlFor={name} className="block text-sm font-medium text-gray-700 mb-1">
+        {label} {required && <span className="text-red-500">*</span>}
+      </label>
       <input
+        ref={ref} 
         type={type}
         id={name}
         name={name}
@@ -13,4 +18,6 @@ export default function InputField({ label, name, type = "text", value, onChange
       />
     </div>
   );
-}
+});
+
+export default InputField;
