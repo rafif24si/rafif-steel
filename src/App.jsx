@@ -18,6 +18,7 @@ const AuthLayout = React.lazy(() => import("./layouts/AuthLayout"));
 const Login = React.lazy(() => import("./pages/Auth/Login"));
 const Register = React.lazy(() => import("./pages/Auth/Register"));
 const Forgot = React.lazy(() => import("./pages/Auth/Forget"));
+const Users = React.lazy(() => import("./pages/Users"));
 
 function App() {
   return (
@@ -30,6 +31,7 @@ function App() {
           <Route path="/services" element={<Services />} />
           <Route path="/products" element={<Products />} />
           <Route path="/products/:id" element={<ProductDetail />} />
+          <Route path="/users" element={<Users />} />
           
           {/* RUTE BARU TUGAS SHADCN UI */}
           <Route path="/kapster" element={<Kapster />} />

@@ -68,6 +68,11 @@ export default function Sidebar() {
               <FaUserTie className="mr-3 text-lg text-emerald-600" /> Kapster
             </NavLink>
           </li>
+           <li>
+            <NavLink to="/users" className={menuClass}>
+              <FaUserTie className="mr-3 text-lg text-emerald-600" /> Users
+            </NavLink>
+          </li>
         </ul>
       </div>
 

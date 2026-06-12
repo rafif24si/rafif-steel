@@ -1,15 +1,49 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaEnvelope, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
+import { usersAPI } from '../../services/usersAPI'; // Pastikan path import ini sesuai
 
 export default function Login() {
     const [showPassword, setShowPassword] = useState(false);
+    const [loading, setLoading] = useState(false);
+    
+    // State untuk menampung inputan login
+    const [credentials, setCredentials] = useState({
+        email: "",
+        password: ""
+    });
+
     const navigate = useNavigate();
 
-    const handleLogin = (e) => {
+    const handleChange = (e) => {
+        setCredentials({ ...credentials, [e.target.name]: e.target.value });
+    };
+
+    const handleLogin = async (e) => {
         e.preventDefault();
-        // Simulasi login sukses, arahkan ke Dashboard Barbershop
-        navigate('/');
+        try {
+            setLoading(true);
+            
+            // Mengirim request GET ke Supabase mencari email & password yang cocok
+            const users = await usersAPI.loginUser(credentials.email, credentials.password);
+            
+            // Cek apakah data user ditemukan
+            if (users && users.length > 0) {
+                const loggedInUser = users[0]; // Ambil data user dari array
+                
+                // Simpan data user ke localStorage agar sesi tetap terjaga
+                localStorage.setItem("user", JSON.stringify(loggedInUser));
+                
+                alert("Welcome back, " + loggedInUser.name + "!");
+                navigate('/'); // Arahkan ke Dashboard
+            } else {
+                alert("Email atau Password salah!");
+            }
+        } catch (error) {
+            alert("Terjadi kesalahan sistem: " + error.message);
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -31,6 +65,9 @@ export default function Login() {
                         </span>
                         <input 
                             type="email" 
+                            name="email"
+                            value={credentials.email}
+                            onChange={handleChange}
                             placeholder="admin@haircut.com" 
                             className="w-full bg-slate-50 border-none rounded-2xl pl-11 pr-4 py-3.5 text-sm font-medium outline-none focus:ring-2 focus:ring-slate-800 transition-all"
                             required
@@ -49,6 +86,9 @@ export default function Login() {
                         </span>
                         <input 
                             type={showPassword ? "text" : "password"} 
+                            name="password"
+                            value={credentials.password}
+                            onChange={handleChange}
                             placeholder="••••••••" 
                             className="w-full bg-slate-50 border-none rounded-2xl pl-11 pr-12 py-3.5 text-sm font-medium outline-none focus:ring-2 focus:ring-slate-800 transition-all"
                             required
@@ -77,9 +117,10 @@ export default function Login() {
                 {/* Login Button */}
                 <button 
                     type="submit" 
-                    className="w-full mt-4 py-4 bg-slate-800 text-white font-black rounded-2xl shadow-lg shadow-slate-200 hover:bg-slate-700 hover:shadow-xl transition-all active:scale-95 flex justify-center items-center gap-2"
+                    disabled={loading}
+                    className="w-full mt-4 py-4 bg-slate-800 text-white font-black rounded-2xl shadow-lg shadow-slate-200 hover:bg-slate-700 hover:shadow-xl transition-all active:scale-95 flex justify-center items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
                 >
-                    Sign In to Dashboard
+                    {loading ? "Checking details..." : "Sign In to Dashboard"}
                 </button>
             </form>
 
