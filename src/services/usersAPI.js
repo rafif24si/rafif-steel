@@ -1,6 +1,4 @@
 import axios from 'axios';
-
-// Ganti URL dan API_KEY dengan milik project Supabase-mu
 const API_URL = "https://nrhdsormwvapwjrhjfcb.supabase.co/rest/v1/users";
 const API_KEY = "sb_publishable_t1YlxWCGxBoY7YL95yrc1w_pIEZgGaf";
 

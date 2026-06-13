@@ -1,13 +1,13 @@
+// src/pages/Auth/Login.jsx
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaEnvelope, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
-import { usersAPI } from '../../services/usersAPI'; // Pastikan path import ini sesuai
+import { usersAPI } from '../../services/usersAPI'; 
 
 export default function Login() {
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     
-    // State untuk menampung inputan login
     const [credentials, setCredentials] = useState({
         email: "",
         password: ""
@@ -23,19 +23,15 @@ export default function Login() {
         e.preventDefault();
         try {
             setLoading(true);
-            
-            // Mengirim request GET ke Supabase mencari email & password yang cocok
             const users = await usersAPI.loginUser(credentials.email, credentials.password);
             
-            // Cek apakah data user ditemukan
             if (users && users.length > 0) {
-                const loggedInUser = users[0]; // Ambil data user dari array
-                
-                // Simpan data user ke localStorage agar sesi tetap terjaga
+                const loggedInUser = users[0]; 
                 localStorage.setItem("user", JSON.stringify(loggedInUser));
-                
                 alert("Welcome back, " + loggedInUser.name + "!");
-                navigate('/'); // Arahkan ke Dashboard
+                
+                // PENYESUAIAN: Arahkan ke /dashboard, bukan /
+                navigate('/dashboard'); 
             } else {
                 alert("Email atau Password salah!");
             }
@@ -54,7 +50,6 @@ export default function Login() {
             </div>
 
             <form onSubmit={handleLogin} className="space-y-5">
-                {/* Input Email */}
                 <div className="group">
                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.1em] mb-2 group-focus-within:text-slate-800 transition-colors">
                         Email Address
@@ -75,7 +70,6 @@ export default function Login() {
                     </div>
                 </div>
 
-                {/* Input Password */}
                 <div className="group">
                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.1em] mb-2 group-focus-within:text-slate-800 transition-colors">
                         Password
@@ -103,7 +97,6 @@ export default function Login() {
                     </div>
                 </div>
 
-                {/* Remember Me & Forgot Password */}
                 <div className="flex items-center justify-between pt-1">
                     <label className="flex items-center gap-2 cursor-pointer group">
                         <input type="checkbox" className="w-4 h-4 rounded border-slate-300 text-slate-800 focus:ring-slate-800 cursor-pointer" />
@@ -114,7 +107,6 @@ export default function Login() {
                     </Link>
                 </div>
 
-                {/* Login Button */}
                 <button 
                     type="submit" 
                     disabled={loading}
@@ -124,7 +116,6 @@ export default function Login() {
                 </button>
             </form>
 
-            {/* Register Link */}
             <div className="mt-8 text-center text-xs font-medium text-slate-500">
                 Don't have an account?{' '}
                 <Link to="/register" className="text-slate-800 font-bold hover:underline transition-all">

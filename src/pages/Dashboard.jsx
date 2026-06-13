@@ -1,75 +1,132 @@
 import React, { useState, useEffect } from 'react';
-import Button from "../components/Button";
-import Card from "../components/Card";
 import { 
-  FaArrowUp, FaArrowDown, FaCircle, FaTimes, FaSearch, FaBell, FaUserPlus, FaBug, FaSatelliteDish
+  FaSearch, FaBell, FaUserPlus, 
+  FaCut, FaCalendarCheck, FaMoneyBillWave, FaUserFriends, 
+  FaChartLine, FaClock, FaCrown, FaStar, FaTrophy,
+  FaDollarSign, FaShoppingBag, FaTags, FaPercentage,
+  FaEnvelope, FaExclamationTriangle, FaCheckCircle
 } from "react-icons/fa";
-import { FiChevronDown, FiFilter, FiRefreshCw, FiMoreVertical, FiChevronUp } from "react-icons/fi";
+import { 
+  FiChevronDown, FiFilter, FiRefreshCw, FiMoreVertical, FiChevronUp,
+  FiTrendingUp, FiTrendingDown, FiActivity, FiBarChart2, FiPieChart,
+  FiDownload, FiPrinter, FiCalendar
+} from "react-icons/fi";
 import { 
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
+  Area, AreaChart, RadialBarChart, RadialBar
 } from 'recharts';
 
-// --- DATA DUMMY ---
-const dataGrafik = [
-  { name: 'Jan', thisYear: 12000, lastYear: 5000 },
-  { name: 'Feb', thisYear: 14000, lastYear: 13000 },
-  { name: 'Mar', thisYear: 13000, lastYear: 18000 },
-  { name: 'Apr', thisYear: 24000, lastYear: 9000 },
-  { name: 'May', thisYear: 28000, lastYear: 13000 },
-  { name: 'Jun', thisYear: 21000, lastYear: 26000 },
-  { name: 'Jul', thisYear: 23000, lastYear: 28000 },
+// --- DATA ---
+const revenueData = [
+  { name: 'Jan', thisYear: 12000, lastYear: 5000, target: 10000 },
+  { name: 'Feb', thisYear: 14000, lastYear: 13000, target: 12000 },
+  { name: 'Mar', thisYear: 13000, lastYear: 18000, target: 15000 },
+  { name: 'Apr', thisYear: 24000, lastYear: 9000, target: 18000 },
+  { name: 'May', thisYear: 28000, lastYear: 13000, target: 22000 },
+  { name: 'Jun', thisYear: 21000, lastYear: 26000, target: 25000 },
+  { name: 'Jul', thisYear: 32000, lastYear: 28000, target: 30000 },
+  { name: 'Aug', thisYear: 35000, lastYear: 22000, target: 32000 },
 ];
 
-const dataBar = [
-  { name: 'Linux', uv: 18000, fill: '#A0BCE8' },
-  { name: 'Mac', uv: 28000, fill: '#6BE6D3' },
-  { name: 'iOS', uv: 22000, fill: '#0C0C0C' },
-  { name: 'Windows', uv: 32000, fill: '#7DBBFF' },
-  { name: 'Android', uv: 14000, fill: '#D0BDF0' },
-  { name: 'Other', uv: 26000, fill: '#6BE6D3' },
+const serviceData = [
+  { name: 'Haircut', value: 18000, color: '#6366F1' },
+  { name: 'Shaving', value: 12000, color: '#8B5CF6' },
+  { name: 'Coloring', value: 9000, color: '#A78BFA' },
+  { name: 'Beard', value: 15000, color: '#C4B5FD' },
+  { name: 'Spa', value: 7000, color: '#DDD6FE' },
+  { name: 'Package', value: 20000, color: '#EDE9FE' },
 ];
 
-const dataPie = [
-  { name: 'Gentleman Haircut', value: 52.1, color: '#A0BCE8' },
-  { name: 'Beard Trim & Line up', value: 22.8, color: '#6BE6D3' },
-  { name: 'Hair Coloring', value: 13.9, color: '#0C0C0C' },
-  { name: 'Kid Haircut', value: 11.2, color: '#D0BDF0' },
+const distributionData = [
+  { name: 'Haircut', value: 45.2, color: '#6366F1' },
+  { name: 'Beard Trim', value: 25.8, color: '#8B5CF6' },
+  { name: 'Coloring', value: 18.9, color: '#A78BFA' },
+  { name: 'Other', value: 10.1, color: '#C4B5FD' },
 ];
 
-const rightPanelData = {
-  notifications: [
-    { id: 1, type: 'bug', icon: FaBug, text: 'You fixed a bug.', time: 'Just now', read: false },
-    { id: 2, type: 'user', icon: FaUserPlus, text: 'New user registered.', time: '59 minutes ago', read: false },
-    { id: 3, type: 'bug', icon: FaBug, text: 'You fixed a bug.', time: '12 hours ago', read: true },
-    { id: 4, type: 'subscription', icon: FaSatelliteDish, text: 'Andi Lane subscribed to you.', time: 'Today, 11:59 AM', read: true },
-  ],
-  activities: [
-    { id: 1, user: 'Anton', text: 'Changed the style.', time: 'Just now' },
-    { id: 2, user: 'Bima', text: 'Released a new version.', time: '59 minutes ago' },
-    { id: 3, user: 'Rizky', text: 'Submitted a bug.', time: '12 hours ago' },
-    { id: 4, user: 'Tomi', text: 'Modified A data in Page X.', time: 'Today, 11:59 AM' },
-  ],
-  contacts: [
-    { name: 'Natali Craig', online: true },
-    { name: 'Drew Cano', online: true },
-    { name: 'Andi Lane', online: false },
-    { name: 'Koray Okumus', online: true },
-    { name: 'Kate Morrison', online: false },
-  ]
+// --- COMPONENTS ---
+
+const AnimatedCounter = ({ value, prefix = "", suffix = "", decimals = 0, duration = 2000 }) => {
+  const [count, setCount] = useState(0);
+  
+  useEffect(() => {
+    let startTime;
+    let animationFrame;
+    
+    const animate = (timestamp) => {
+      if (!startTime) startTime = timestamp;
+      const progress = Math.min((timestamp - startTime) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 4);
+      setCount(eased * value);
+      if (progress < 1) {
+        animationFrame = requestAnimationFrame(animate);
+      }
+    };
+    
+    animationFrame = requestAnimationFrame(animate);
+    
+    return () => {
+      if (animationFrame) cancelAnimationFrame(animationFrame);
+    };
+  }, [value, duration]);
+
+  return (
+    <span>
+      {prefix}
+      {count.toLocaleString(undefined, { 
+        minimumFractionDigits: decimals, 
+        maximumFractionDigits: decimals 
+      })}
+      {suffix}
+    </span>
+  );
 };
 
-// Custom Tooltip Component
-const CustomTooltip = ({ active, payload, label }) => {
+const Sparkline = ({ data, color }) => {
+  if (!data || data.length === 0) return <div style={{ height: 40 }}></div>;
+  
+  const gradientId = `spark-${color.replace('#', '')}`;
+  
+  return (
+    <div style={{ width: '64px', height: '40px' }}>
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart data={data} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+          <defs>
+            <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={color} stopOpacity={0.3}/>
+              <stop offset="100%" stopColor={color} stopOpacity={0}/>
+            </linearGradient>
+          </defs>
+          <Area 
+            type="monotone" 
+            dataKey="value" 
+            stroke={color} 
+            fill={`url(#${gradientId})`} 
+            strokeWidth={2} 
+            dot={false} 
+            isAnimationActive={false}
+          />
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
+  );
+};
+
+const PremiumTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-white p-4 rounded-xl shadow-xl border border-gray-100">
-        <p className="text-sm font-bold mb-2">{label}</p>
+      <div className="bg-white/95 backdrop-blur-xl p-5 rounded-[2rem] shadow-2xl border border-gray-100 min-w-[180px]">
+        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">{label}</p>
         {payload.map((entry, index) => (
-          <div key={index} className="flex items-center gap-2 text-sm">
-            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: entry.color }}></div>
-            <span className="text-gray-600">{entry.name}:</span>
-            <span className="font-bold">Rp {(entry.value / 1000).toFixed(1)}K</span>
+          <div key={index} className="flex items-center justify-between gap-4 text-sm mb-1.5">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: entry.color }}></div>
+              <span className="text-gray-600 text-xs">{entry.name}:</span>
+            </div>
+            <span className="font-bold text-gray-900 text-xs">
+              Rp {(entry.value / 1000).toFixed(1)}K
+            </span>
           </div>
         ))}
       </div>
@@ -78,49 +135,69 @@ const CustomTooltip = ({ active, payload, label }) => {
   return null;
 };
 
-// Custom Bar Tooltip
-const BarTooltip = ({ active, payload, label }) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="bg-white p-3 rounded-xl shadow-lg border border-gray-100">
-        <p className="text-xs font-bold mb-1">{label}</p>
-        <p className="text-sm">Traffic: <span className="font-bold">{(payload[0].value / 1000).toFixed(1)}K</span></p>
-      </div>
-    );
-  }
-  return null;
-};
+const QuickAction = ({ icon: Icon, label, color, onClick }) => (
+  <button
+    onClick={onClick}
+    className="flex items-center gap-3 p-4 rounded-[1.75rem] transition-all duration-300 hover:scale-105 group bg-white border border-gray-100 shadow-sm hover:shadow-lg"
+  >
+    <div 
+      className="w-12 h-12 rounded-[1.25rem] flex items-center justify-center transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3"
+      style={{ backgroundColor: `${color}15` }}
+    >
+      <Icon style={{ color }} className="text-xl" />
+    </div>
+    <span className="text-sm font-semibold text-gray-700">{label}</span>
+  </button>
+);
 
 export default function Dashboard() {
-  // STATE UNTUK INTERAKTIVITAS
+  const [selectedFilter, setSelectedFilter] = useState('This Month');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [selectedFilter, setSelectedFilter] = useState('Today');
   const [showThisYear, setShowThisYear] = useState(true);
-  const [showLastYear, setShowLastYear] = useState(true);
-  const [activeChartTab, setActiveChartTab] = useState('pendapatan');
+  const [showLastYear, setShowLastYear] = useState(false);
+  const [showTarget, setShowTarget] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const [selectedCard, setSelectedCard] = useState(null);
-  const [notifications, setNotifications] = useState(rightPanelData.notifications);
-  const [searchTerm, setSearchTerm] = useState('');
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [greeting, setGreeting] = useState('');
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [selectedStat, setSelectedStat] = useState(null);
 
-  // Handle scroll to top button visibility
+  const [notifications, setNotifications] = useState([
+    { id: 1, type: 'success', icon: FaCheckCircle, text: 'Payment received Rp 250.000', time: '2 min ago', read: false },
+    { id: 2, type: 'info', icon: FaCalendarCheck, text: 'New booking: Gentleman Cut', time: '15 min ago', read: false },
+    { id: 3, type: 'warning', icon: FaExclamationTriangle, text: 'Low stock: Pomade Classic', time: '45 min ago', read: false },
+    { id: 4, type: 'success', icon: FaCut, text: 'Service #1245 completed', time: '1 hour ago', read: true },
+    { id: 5, type: 'info', icon: FaUserPlus, text: 'New member registered', time: '2 hours ago', read: true },
+    { id: 6, type: 'message', icon: FaEnvelope, text: 'Customer feedback received', time: '3 hours ago', read: true },
+  ]);
+
   useEffect(() => {
-    const handleScroll = () => {
-      setShowScrollTop(window.scrollY > 400);
-    };
+    const handleScroll = () => setShowScrollTop(window.scrollY > 400);
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+    
+    const hour = new Date().getHours();
+    if (hour < 12) setGreeting('Good Morning');
+    else if (hour < 17) setGreeting('Good Afternoon');
+    else setGreeting('Good Evening');
 
-  const handleFilterSelect = (filter) => {
-    setSelectedFilter(filter);
-    setIsFilterOpen(false);
-  };
+    const timer = setInterval(() => setCurrentTime(new Date()), 60000);
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      clearInterval(timer);
+    };
+  }, []);
 
   const handleRefresh = () => {
     setIsRefreshing(true);
     setTimeout(() => setIsRefreshing(false), 1000);
+  };
+
+  const markAsRead = (id) => {
+    setNotifications(notifications.map(n => 
+      n.id === id ? { ...n, read: true } : n
+    ));
   };
 
   const markAllAsRead = () => {
@@ -129,270 +206,357 @@ export default function Dashboard() {
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
+  const statCards = [
+    { 
+      title: 'Total Revenue', 
+      value: 13.9, 
+      prefix: 'Rp ', 
+      suffix: 'M', 
+      percent: '+11.01', 
+      isUp: true, 
+      icon: FaDollarSign,
+      color: '#6366F1',
+      sparkline: revenueData.map(d => ({ value: d.thisYear / 1000 })),
+      detail: 'Revenue increased significantly compared to last month'
+    },
+    { 
+      title: 'Appointments', 
+      value: 142, 
+      percent: '-0.03', 
+      isUp: false, 
+      icon: FaCalendarCheck,
+      color: '#3B82F6',
+      sparkline: [40, 55, 45, 60, 50, 65, 58, 70, 62, 75, 68, 80].map(v => ({ value: v })),
+      detail: 'Slight decrease from last week, monitor closely'
+    },
+    { 
+      title: 'Services Done', 
+      value: 89, 
+      percent: '+15.03', 
+      isUp: true, 
+      icon: FaCut,
+      color: '#10B981',
+      sparkline: [30, 35, 40, 38, 45, 42, 50, 55, 52, 60, 65, 70].map(v => ({ value: v })),
+      detail: 'Haircut service remains the most popular choice'
+    },
+    { 
+      title: 'Walk-in Clients', 
+      value: 24, 
+      percent: '+6.08', 
+      isUp: true, 
+      icon: FaUserFriends,
+      color: '#F59E0B',
+      sparkline: [10, 12, 9, 15, 13, 18, 16, 20, 19, 22, 21, 24].map(v => ({ value: v })),
+      detail: 'Increase in walk-in customers this week'
+    },
+  ];
+
+  const getNotificationStyle = (type) => {
+    const styles = {
+      success: { bg: 'bg-emerald-50', icon: 'text-emerald-500', dot: 'bg-emerald-500', border: 'border-emerald-200' },
+      info: { bg: 'bg-blue-50', icon: 'text-blue-500', dot: 'bg-blue-500', border: 'border-blue-200' },
+      warning: { bg: 'bg-amber-50', icon: 'text-amber-500', dot: 'bg-amber-500', border: 'border-amber-200' },
+      message: { bg: 'bg-violet-50', icon: 'text-violet-500', dot: 'bg-violet-500', border: 'border-violet-200' },
+    };
+    return styles[type] || styles.info;
+  };
+
   return (
-    <div className="flex-1 w-full pb-10 px-8 pt-2 bg-[#FFFFFF] min-h-screen font-sans text-[#0C0C0C]" style={{ fontFamily: "'Inter', sans-serif" }}>
+    <div className="flex-1 w-full pb-10 px-4 md:px-8 pt-6 bg-[#F5F3FF] min-h-screen font-sans">
       
-      {/* --- OVERVIEW & FILTER --- */}
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex items-center gap-4">
-          <h1 className="text-lg font-semibold text-[#0C0C0C]">Overview</h1>
-          
-          {/* Filter Button Group */}
-          <div className="hidden md:flex bg-[#F7F9FB] p-1 rounded-xl gap-1">
-            {['Today', 'This Week', 'This Month', 'This Year'].map((item) => (
-              <button
-                key={item}
-                onClick={() => setSelectedFilter(item)}
-                className={`px-4 py-1.5 text-sm rounded-lg transition-all duration-300 ${
-                  selectedFilter === item 
-                    ? 'bg-white text-[#0C0C0C] shadow-md font-semibold' 
-                    : 'text-gray-500 hover:text-[#0C0C0C]'
-                }`}
-              >
-                {item}
-              </button>
-            ))}
-          </div>
-        </div>
-        
-        {/* Action Buttons */}
-        <div className="flex items-center gap-3">
-          {/* Refresh Button */}
-          <button 
-            onClick={handleRefresh}
-            className="p-2 rounded-lg hover:bg-[#F7F9FB] transition-colors"
-            title="Refresh data"
-          >
-            <FiRefreshCw className={`text-gray-600 ${isRefreshing ? 'animate-spin' : ''}`} />
-          </button>
-          
-          {/* Search Input */}
-          <div className="relative hidden md:block">
-            <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-xs" />
-            <input
-              type="text"
-              placeholder="Search..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9 pr-4 py-1.5 text-sm bg-[#F7F9FB] rounded-xl border-0 outline-none focus:ring-2 focus:ring-[#0C0C0C]/10 w-48 transition-all"
-            />
+      {/* ============ TOP BAR ============ */}
+      <div className="mb-8">
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
+          <div>
+            <div className="flex items-center gap-3 mb-1">
+              <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
+                {greeting}, <span className="bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent">Admin!</span> 👋
+              </h2>
+            </div>
+            <p className="text-sm text-gray-500 flex items-center gap-2">
+              <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+              {currentTime.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+              <span className="text-gray-300">•</span>
+              {currentTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+            </p>
           </div>
           
-          {/* Mobile Filter Dropdown */}
-          <div className="relative md:hidden">
-            <div 
-              className="flex items-center text-sm text-[#0C0C0C] gap-1 cursor-pointer font-medium hover:bg-gray-50 px-3 py-1.5 rounded-lg transition-colors"
-              onClick={() => setIsFilterOpen(!isFilterOpen)}
-            >
-              {selectedFilter} <FiChevronDown className={`ml-1 text-gray-400 transition-transform duration-300 ${isFilterOpen ? 'rotate-180' : ''}`} />
+          <div className="flex items-center gap-3 w-full lg:w-auto">
+            {/* Search - Super Rounded */}
+            <div className="relative flex-1 lg:flex-none">
+              <FaSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 text-sm" />
+              <input
+                type="text"
+                placeholder="Search anything..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full lg:w-72 pl-12 pr-5 py-3.5 bg-white border border-gray-200 rounded-[1.75rem] text-sm outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 transition-all shadow-sm"
+              />
             </div>
             
-            {isFilterOpen && (
-              <div className="absolute right-0 mt-2 w-36 bg-white border border-gray-100 rounded-xl shadow-lg z-50 overflow-hidden">
-                {['Today', 'This Week', 'This Month', 'This Year'].map((item) => (
-                  <div 
-                    key={item}
-                    className={`px-4 py-2 text-sm cursor-pointer hover:bg-[#F7F9FB] transition-colors ${selectedFilter === item ? 'font-semibold text-[#0C0C0C]' : 'text-gray-500'}`}
-                    onClick={() => handleFilterSelect(item)}
-                  >
-                    {item}
-                  </div>
-                ))}
-              </div>
-            )}
+            {/* Quick Actions - Super Rounded */}
+            <button className="p-3.5 bg-white rounded-[1.25rem] border border-gray-200 text-gray-500 hover:text-violet-600 hover:border-violet-200 transition-all shadow-sm">
+              <FiDownload className="text-lg" />
+            </button>
+            <button className="p-3.5 bg-white rounded-[1.25rem] border border-gray-200 text-gray-500 hover:text-violet-600 hover:border-violet-200 transition-all shadow-sm">
+              <FiPrinter className="text-lg" />
+            </button>
+            
+            {/* Refresh */}
+            <button 
+              onClick={handleRefresh}
+              className="p-3.5 bg-white rounded-[1.25rem] border border-gray-200 text-gray-500 hover:text-violet-600 hover:border-violet-200 transition-all shadow-sm"
+            >
+              <FiRefreshCw className={`text-lg ${isRefreshing ? 'animate-spin' : ''}`} />
+            </button>
+            
+            {/* Notifications */}
+            <div className="relative">
+              <button className="relative p-3.5 bg-white rounded-[1.25rem] border border-gray-200 text-gray-500 hover:text-violet-600 hover:border-violet-200 transition-all shadow-sm">
+                <FaBell className="text-lg" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center animate-pulse shadow-lg">
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
+            </div>
+            
+            {/* Filter - Super Rounded */}
+            <div className="relative">
+              <button
+                onClick={() => setIsFilterOpen(!isFilterOpen)}
+                className="flex items-center gap-2 px-5 py-3.5 bg-white border border-gray-200 rounded-[1.75rem] text-sm font-medium text-gray-700 hover:border-violet-200 transition-all shadow-sm"
+              >
+                <FiCalendar className="text-gray-400" />
+                <span className="hidden sm:inline">{selectedFilter}</span>
+                <FiChevronDown className={`text-gray-400 transition-transform duration-300 ${isFilterOpen ? 'rotate-180' : ''}`} />
+              </button>
+              
+              {isFilterOpen && (
+                <div className="absolute right-0 mt-2 w-44 bg-white rounded-[1.75rem] shadow-xl border border-gray-100 overflow-hidden z-50">
+                  {['Today', 'This Week', 'This Month', 'This Year'].map((item) => (
+                    <button
+                      key={item}
+                      onClick={() => { setSelectedFilter(item); setIsFilterOpen(false); }}
+                      className={`w-full text-left px-6 py-3.5 text-sm transition-all hover:bg-violet-50 ${
+                        selectedFilter === item ? 'font-semibold text-violet-600 bg-violet-50' : 'text-gray-600'
+                      }`}
+                    >
+                      {item}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
+     
       <div className="grid lg:grid-cols-4 gap-6">
         
-        {/* ================= LEFT MAIN CONTENT ================= */}
+        {/* ================= MAIN CONTENT ================= */}
         <div className="lg:col-span-3 space-y-6">
-            
-          {/* --- ROW 1: STATISTIC CARDS --- */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            {[
-              { title: 'Total Pendapatan', value: 'Rp 13.9M', percent: '+11.01%', isUp: true, bg: 'bg-[#EDEEFC]', detail: 'Pendapatan bulan ini meningkat signifikan' },
-              { title: 'Jadwal (Minggu Ini)', value: '142', percent: '-0.03%', isUp: false, bg: 'bg-[#E6F1FD]', detail: 'Sedikit penurunan dari minggu lalu' },
-              { title: 'Rambut Dipotong', value: '89', percent: '+15.03%', isUp: true, bg: 'bg-[#EDEEFC]', detail: 'Layanan potong rambut paling diminati' },
-              { title: 'Pelanggan Walk-in', value: '24', percent: '+6.08%', isUp: true, bg: 'bg-[#E6F1FD]', detail: 'Pelanggan tanpa janji temu meningkat' },
-            ].map((card, index) => (
+          
+          {/* --- STAT CARDS - Super Rounded --- */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+            {statCards.map((card, index) => (
               <div 
                 key={index} 
-                className={`${card.bg} rounded-2xl p-5 cursor-pointer transform hover:-translate-y-2 hover:scale-105 hover:shadow-xl transition-all duration-300 group relative overflow-hidden`}
-                onClick={() => setSelectedCard(selectedCard === index ? null : index)}
+                onClick={() => setSelectedStat(selectedStat === index ? null : index)}
+                className={`group relative bg-white rounded-[2.5rem] p-6 cursor-pointer transition-all duration-500 border border-gray-100 overflow-hidden shadow-sm ${
+                  selectedStat === index ? 'ring-2 ring-violet-500 shadow-2xl scale-[1.02]' : 'hover:shadow-xl hover:scale-[1.01]'
+                }`}
               >
-                {/* Gradient overlay on hover */}
-                <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                {/* Gradient background */}
+                <div className="absolute inset-0 bg-gradient-to-br from-gray-50 to-gray-100/50 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                
+                {/* Shine effect */}
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700">
+                  <div className="absolute -inset-full bg-gradient-to-r from-transparent via-white/20 to-transparent -rotate-45 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000"></div>
+                </div>
                 
                 <div className="relative z-10">
-                  <div className="flex justify-between items-start mb-2">
-                    <p className="text-[#0C0C0C] font-semibold text-[13px] group-hover:translate-x-1 transition-transform">
-                      {card.title}
-                    </p>
-                    <button className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-white/50 rounded-lg">
-                      <FiMoreVertical className="text-xs" />
-                    </button>
+                  <div className="flex justify-between items-start mb-4">
+                    <div 
+                      className="w-12 h-12 rounded-[1.25rem] flex items-center justify-center shadow-md group-hover:scale-110 group-hover:rotate-6 transition-all duration-300"
+                      style={{ backgroundColor: `${card.color}15` }}
+                    >
+                      <card.icon className="text-xl" style={{ color: card.color }} />
+                    </div>
+                    <Sparkline data={card.sparkline} color={card.color} />
                   </div>
                   
-                  <div className="flex items-end gap-3 mt-1">
-                    <h3 className="text-[28px] font-bold tracking-tight leading-none group-hover:scale-110 transform origin-left transition-transform duration-300">
-                      {card.value}
+                  <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">
+                    {card.title}
+                  </p>
+                  
+                  <div className="flex items-end justify-between">
+                    <h3 className="text-[1.75rem] font-bold text-gray-900 tracking-tight">
+                      <AnimatedCounter value={card.value} prefix={card.prefix} suffix={card.suffix} decimals={card.suffix ? 1 : 0} />
                     </h3>
                     
-                    <span className={`flex items-center text-[11px] mb-1 px-2 py-0.5 rounded-full ${
-                      card.isUp ? 'bg-green-100/50 text-green-700' : 'bg-red-100/50 text-red-700'
+                    <span className={`flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-full ${
+                      card.isUp 
+                        ? 'bg-emerald-50 text-emerald-600' 
+                        : 'bg-red-50 text-red-600'
                     }`}>
-                      {card.percent} 
-                      {card.isUp ? (
-                        <FaArrowUp className="ml-1 text-[9px] animate-bounce" />
-                      ) : (
-                        <FaArrowDown className="ml-1 text-[9px] animate-bounce" />
-                      )}
+                      {card.isUp ? <FiTrendingUp className="text-xs" /> : <FiTrendingDown className="text-xs" />}
+                      {card.percent}%
                     </span>
                   </div>
                   
                   {/* Expandable detail */}
-                  <div className={`overflow-hidden transition-all duration-300 ${selectedCard === index ? 'max-h-20 mt-3' : 'max-h-0'}`}>
-                    <p className="text-xs text-gray-600 bg-white/50 rounded-lg p-2">{card.detail}</p>
-                  </div>
-                  
-                  {/* Progress bar */}
-                  <div className="mt-3 w-full bg-white/50 rounded-full h-1 overflow-hidden">
-                    <div 
-                      className={`h-full rounded-full transition-all duration-1000 ${card.isUp ? 'bg-green-400' : 'bg-red-400'}`}
-                      style={{ width: `${Math.min(Math.abs(parseFloat(card.percent)), 100)}%` }}
-                    ></div>
+                  <div className={`overflow-hidden transition-all duration-300 ${
+                    selectedStat === index ? 'max-h-20 mt-4 opacity-100' : 'max-h-0 opacity-0'
+                  }`}>
+                    <div className="bg-gray-50 rounded-[1.25rem] p-3 text-xs text-gray-500 leading-relaxed">
+                      {card.detail}
+                    </div>
                   </div>
                 </div>
               </div>
             ))}
           </div>
 
-          {/* --- ROW 2: LINE CHART WITH TABS --- */}
-          <div className="bg-[#F7F9FB] p-6 rounded-2xl hover:shadow-lg transition-all duration-300">
-            {/* Chart Tabs */}
-            <div className="flex flex-wrap items-center justify-between mb-6">
-              <div className="flex gap-6">
-                <button
-                  onClick={() => setActiveChartTab('pendapatan')}
-                  className={`text-[13px] relative pb-2 transition-all ${
-                    activeChartTab === 'pendapatan' 
-                      ? 'text-[#0C0C0C] font-bold' 
-                      : 'text-gray-400 hover:text-[#0C0C0C]'
-                  }`}
-                >
-                  Total Pendapatan
-                  {activeChartTab === 'pendapatan' && (
-                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0C0C0C] rounded-full"></div>
-                  )}
-                </button>
-                <button
-                  onClick={() => setActiveChartTab('layanan')}
-                  className={`text-[13px] relative pb-2 transition-all ${
-                    activeChartTab === 'layanan' 
-                      ? 'text-[#0C0C0C] font-bold' 
-                      : 'text-gray-400 hover:text-[#0C0C0C]'
-                  }`}
-                >
-                  Total Layanan
-                  {activeChartTab === 'layanan' && (
-                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0C0C0C] rounded-full"></div>
-                  )}
-                </button>
-                <button
-                  onClick={() => setActiveChartTab('operasional')}
-                  className={`text-[13px] relative pb-2 transition-all ${
-                    activeChartTab === 'operasional' 
-                      ? 'text-[#0C0C0C] font-bold' 
-                      : 'text-gray-400 hover:text-[#0C0C0C]'
-                  }`}
-                >
-                  Status Operasional
-                  {activeChartTab === 'operasional' && (
-                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0C0C0C] rounded-full"></div>
-                  )}
-                </button>
+          {/* --- MAIN CHART - Super Rounded --- */}
+          <div className="bg-white rounded-[2.5rem] p-6 md:p-8 border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                  <FiActivity className="text-violet-500" />
+                  Revenue Overview
+                </h3>
+                <p className="text-xs text-gray-400 mt-1">Monthly revenue performance with targets</p>
               </div>
               
-              {/* LEGEND TOGGLE */}
-              <div className="flex gap-4 text-[12px] font-medium">
-                <span 
-                  className={`flex items-center gap-1.5 cursor-pointer select-none transition-all duration-300 ${
-                    !showThisYear ? 'opacity-40' : 'hover:opacity-80'
-                  }`}
+              <div className="flex items-center gap-2 bg-gray-100 p-1.5 rounded-[1.25rem]">
+                <button
                   onClick={() => setShowThisYear(!showThisYear)}
-                >
-                  <FaCircle className="text-[#0C0C0C] text-[6px]"/> This year
-                </span>
-                <span 
-                  className={`flex items-center gap-1.5 cursor-pointer select-none transition-all duration-300 ${
-                    !showLastYear ? 'opacity-40' : 'hover:opacity-80'
+                  className={`flex items-center gap-2 px-4 py-2 rounded-[1rem] text-xs font-semibold transition-all duration-300 ${
+                    showThisYear ? 'bg-white text-violet-700 shadow-sm' : 'text-gray-400 hover:text-gray-600'
                   }`}
-                  onClick={() => setShowLastYear(!showLastYear)}
                 >
-                  <FaCircle className="text-[#7DBBFF] text-[6px]"/> Last year
-                </span>
+                  <span className="w-2.5 h-2.5 rounded-full bg-violet-500 shadow-sm"></span>
+                  This Year
+                </button>
+                <button
+                  onClick={() => setShowLastYear(!showLastYear)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-[1rem] text-xs font-semibold transition-all duration-300 ${
+                    showLastYear ? 'bg-white text-purple-700 shadow-sm' : 'text-gray-400 hover:text-gray-600'
+                  }`}
+                >
+                  <span className="w-2.5 h-2.5 rounded-full bg-purple-300"></span>
+                  Last Year
+                </button>
+                <button
+                  onClick={() => setShowTarget(!showTarget)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-[1rem] text-xs font-semibold transition-all duration-300 ${
+                    showTarget ? 'bg-white text-amber-700 shadow-sm' : 'text-gray-400 hover:text-gray-600'
+                  }`}
+                >
+                  <span className="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+                  Target
+                </button>
               </div>
             </div>
             
-            <div className="w-full h-[220px]">
+            <div className="w-full" style={{ height: '350px', minHeight: '350px' }}>
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={dataGrafik} margin={{ top: 5, right: 10, left: -25, bottom: 0 }}>
+                <AreaChart data={revenueData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                   <defs>
-                    <linearGradient id="colorThisYear" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#0C0C0C" stopOpacity={0.1}/>
-                      <stop offset="95%" stopColor="#0C0C0C" stopOpacity={0}/>
+                    <linearGradient id="gradientThisYear" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#6366F1" stopOpacity={0.25}/>
+                      <stop offset="100%" stopColor="#6366F1" stopOpacity={0}/>
                     </linearGradient>
-                    <linearGradient id="colorLastYear" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#A0BCE8" stopOpacity={0.1}/>
-                      <stop offset="95%" stopColor="#A0BCE8" stopOpacity={0}/>
+                    <linearGradient id="gradientLastYear" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#C4B5FD" stopOpacity={0.25}/>
+                      <stop offset="100%" stopColor="#C4B5FD" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#9CA3AF', fontSize: 12}} dy={10} />
-                  <YAxis axisLine={false} tickLine={false} tick={{fill: '#9CA3AF', fontSize: 12}} tickFormatter={(val) => val === 0 ? '0' : `${val/1000}K`} />
-                  <Tooltip content={<CustomTooltip />} />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F3F4F6" />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 11 }} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 11 }} tickFormatter={(v) => `${v/1000}K`} />
+                  <Tooltip content={<PremiumTooltip />} />
+                  
                   {showThisYear && (
-                    <>
-                      <Area type="monotone" dataKey="thisYear" stroke="#0C0C0C" fill="url(#colorThisYear)" strokeWidth={2.5} dot={false} activeDot={{ r: 5, fill: '#0C0C0C', stroke: '#fff', strokeWidth: 2 }} />
-                    </>
+                    <Area 
+                      type="monotone" 
+                      dataKey="thisYear" 
+                      name="This Year"
+                      stroke="#6366F1" 
+                      fill="url(#gradientThisYear)" 
+                      strokeWidth={3} 
+                      dot={false} 
+                      activeDot={{ r: 8, fill: '#6366F1', stroke: '#fff', strokeWidth: 3 }}
+                      animationDuration={2000}
+                    />
                   )}
                   {showLastYear && (
-                    <>
-                      <Area type="monotone" dataKey="lastYear" stroke="#A0BCE8" fill="url(#colorLastYear)" strokeWidth={2} strokeDasharray="5 5" dot={false} activeDot={{ r: 5, fill: '#A0BCE8', stroke: '#fff', strokeWidth: 2 }} />
-                    </>
+                    <Area 
+                      type="monotone" 
+                      dataKey="lastYear" 
+                      name="Last Year"
+                      stroke="#C4B5FD" 
+                      fill="url(#gradientLastYear)" 
+                      strokeWidth={2.5} 
+                      strokeDasharray="6 4" 
+                      dot={false} 
+                      activeDot={{ r: 8, fill: '#C4B5FD', stroke: '#fff', strokeWidth: 3 }}
+                      animationDuration={2000}
+                      animationBegin={300}
+                    />
+                  )}
+                  {showTarget && (
+                    <Line 
+                      type="monotone" 
+                      dataKey="target" 
+                      name="Target"
+                      stroke="#F59E0B" 
+                      strokeWidth={2} 
+                      strokeDasharray="4 4" 
+                      dot={false}
+                      animationDuration={1500}
+                    />
                   )}
                 </AreaChart>
               </ResponsiveContainer>
             </div>
           </div>
 
-          {/* --- ROW 3: BAR CHART & PIE CHART --- */}
-          <div className="grid grid-cols-2 gap-6">
-            <div className="bg-[#F7F9FB] p-6 rounded-2xl hover:shadow-lg transition-all duration-300">
+          {/* --- BOTTOM CHARTS - Super Rounded --- */}
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            
+            {/* Bar Chart */}
+            <div className="bg-white rounded-[2.5rem] p-6 md:p-8 border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300">
               <div className="flex justify-between items-center mb-6">
-                <h3 className="text-[13px] font-bold">Traffic by Service</h3>
-                <button className="text-gray-400 hover:text-[#0C0C0C] transition-colors">
-                  <FiMoreVertical className="text-sm" />
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                    <FiBarChart2 className="text-violet-500" />
+                    Service Performance
+                  </h3>
+                  <p className="text-xs text-gray-400 mt-1">Revenue by service type</p>
+                </div>
+                <button className="p-2 hover:bg-gray-100 rounded-[1rem] transition-colors">
+                  <FiMoreVertical className="text-gray-400" />
                 </button>
               </div>
-              <div className="w-full h-[180px]">
+              <div className="w-full" style={{ height: '250px', minHeight: '250px' }}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={dataBar} barSize={28} margin={{ top: 0, right: 0, left: -25, bottom: 0 }}>
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#9CA3AF', fontSize: 11}} dy={10} />
-                    <YAxis axisLine={false} tickLine={false} tick={{fill: '#9CA3AF', fontSize: 11}} tickFormatter={(val) => val === 0 ? '0' : `${val/1000}K`} />
-                    <Tooltip content={<BarTooltip />} cursor={{fill: '#EDEEFC', opacity: 0.3}} />
-                    <Bar dataKey="uv" radius={[6, 6, 6, 6]} animationDuration={1500}>
-                      {dataBar.map((entry, index) => (
-                        <Cell 
-                          key={`cell-${index}`} 
-                          fill={entry.fill} 
-                          className="hover:opacity-80 transition-all duration-200 cursor-pointer"
-                          style={{ filter: 'brightness(1)' }}
-                          onMouseEnter={(e) => e.target.style.filter = 'brightness(0.9)'}
-                          onMouseLeave={(e) => e.target.style.filter = 'brightness(1)'}
-                        />
+                  <BarChart data={serviceData} barSize={38} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F3F4F6" />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 10 }} dy={10} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#9CA3AF', fontSize: 10 }} tickFormatter={(v) => `${v/1000}K`} />
+                    <Tooltip cursor={{ fill: '#F3F4F6', opacity: 0.4 }} />
+                    <Bar 
+                      dataKey="value" 
+                      radius={[14, 14, 0, 0]} 
+                      animationDuration={2000}
+                      animationBegin={400}
+                    >
+                      {serviceData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Bar>
                   </BarChart>
@@ -400,51 +564,50 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <div className="bg-[#F7F9FB] p-6 rounded-2xl hover:shadow-lg transition-all duration-300">
+            {/* Pie Chart */}
+            <div className="bg-white rounded-[2.5rem] p-6 md:p-8 border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-[13px] font-bold">Traffic by Location</h3>
-                <button className="text-gray-400 hover:text-[#0C0C0C] transition-colors">
-                  <FiMoreVertical className="text-sm" />
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                    <FiPieChart className="text-violet-500" />
+                    Distribution
+                  </h3>
+                  <p className="text-xs text-gray-400 mt-1">Service type breakdown</p>
+                </div>
+                <button className="p-2 hover:bg-gray-100 rounded-[1rem] transition-colors">
+                  <FiMoreVertical className="text-gray-400" />
                 </button>
               </div>
               <div className="flex items-center">
-                <div className="w-1/2 relative h-[180px] flex justify-center items-center group">
-                  <ResponsiveContainer width="100%" height="100%" className="transform group-hover:scale-105 transition-transform duration-500">
+                <div className="w-1/2" style={{ height: '240px', minHeight: '240px' }}>
+                  <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie 
-                        data={dataPie} 
-                        innerRadius={45} 
-                        outerRadius={70} 
-                        paddingAngle={3} 
+                        data={distributionData} 
+                        innerRadius={65} 
+                        outerRadius={95} 
+                        paddingAngle={6} 
                         dataKey="value" 
                         stroke="none"
-                        animationDuration={1500}
-                        animationBegin={300}
+                        animationDuration={2000}
+                        animationBegin={500}
                       >
-                        {dataPie.map((entry, index) => (
-                          <Cell 
-                            key={`cell-${index}`} 
-                            fill={entry.color} 
-                            className="hover:opacity-80 cursor-pointer outline-none transition-all duration-300"
-                            style={{ filter: 'drop-shadow(0px 2px 4px rgba(0,0,0,0.1))' }}
-                          />
+                        {distributionData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
                         ))}
                       </Pie>
-                      <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }} />
+                      <Tooltip />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
-                <div className="w-1/2 space-y-3 pl-4">
-                  {dataPie.map((srv, idx) => (
-                    <div 
-                      key={idx} 
-                      className="flex justify-between items-center text-[12px] p-1.5 -mx-1.5 rounded-md hover:bg-white cursor-pointer transition-all duration-200 hover:shadow-sm"
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className="w-2.5 h-2.5 rounded-full shadow-sm" style={{ backgroundColor: srv.color }}></span>
-                        <span className="text-[#0C0C0C] text-xs">{srv.name}</span>
+                <div className="w-1/2 space-y-3 pl-2">
+                  {distributionData.map((item, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-3 rounded-[1.25rem] hover:bg-gray-50 cursor-pointer transition-all duration-200">
+                      <div className="flex items-center gap-3">
+                        <div className="w-3.5 h-3.5 rounded-full shadow-sm" style={{ backgroundColor: item.color }}></div>
+                        <span className="text-xs text-gray-700 font-semibold">{item.name}</span>
                       </div>
-                      <span className="font-bold text-[#0C0C0C] text-xs">{srv.value}%</span>
+                      <span className="text-xs font-bold text-gray-900">{item.value}%</span>
                     </div>
                   ))}
                 </div>
@@ -454,139 +617,138 @@ export default function Dashboard() {
         </div>
 
         {/* ================= RIGHT SIDEBAR ================= */}
-        <div className="col-span-1 space-y-6 pl-2">
-            
-          {/* Notifications */}
-          <div>
-            <div className="flex justify-between items-center mb-3">
-              <div className="flex items-center gap-2">
-                <h3 className="text-[13px] font-bold">Notifications</h3>
-                {unreadCount > 0 && (
-                  <span className="bg-[#0C0C0C] text-white text-[10px] px-1.5 py-0.5 rounded-full font-medium">
-                    {unreadCount}
-                  </span>
-                )}
+        <div className="col-span-1 space-y-6">
+          
+          {/* Performance Card - Super Rounded */}
+          <div className="bg-white rounded-[2.5rem] p-6 md:p-8 border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300">
+            <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+              <FaChartLine className="text-violet-500" />
+              Performance Score
+            </h3>
+            <div className="flex justify-center mb-6">
+              <div className="relative" style={{ width: '170px', height: '170px' }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <RadialBarChart 
+                    innerRadius="85%" 
+                    outerRadius="100%" 
+                    data={[{ value: 87, fill: '#6366F1' }]} 
+                    startAngle={90} 
+                    endAngle={-270}
+                  >
+                    <RadialBar dataKey="value" fill="#6366F1" cornerRadius={30} animationDuration={2000} />
+                  </RadialBarChart>
+                </ResponsiveContainer>
+                <div className="absolute inset-0 flex items-center justify-center flex-col">
+                  <span className="text-5xl font-black bg-gradient-to-br from-violet-600 to-purple-600 bg-clip-text text-transparent">87</span>
+                  <span className="text-xs text-gray-400 mt-1 font-semibold">out of 100</span>
+                </div>
               </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-emerald-50 rounded-[1.5rem] p-4 text-center hover:bg-emerald-100 transition-colors cursor-pointer">
+                <FaTrophy className="text-emerald-500 text-xl mx-auto mb-2" />
+                <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider">Target</p>
+                <p className="text-xl font-bold text-emerald-700">95%</p>
+              </div>
+              <div className="bg-violet-50 rounded-[1.5rem] p-4 text-center hover:bg-violet-100 transition-colors cursor-pointer">
+                <FaStar className="text-violet-500 text-xl mx-auto mb-2" />
+                <p className="text-[10px] text-violet-600 font-bold uppercase tracking-wider">Rating</p>
+                <p className="text-xl font-bold text-violet-700">4.9</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Notifications - Super Rounded */}
+          <div className="bg-white rounded-[2.5rem] p-6 md:p-8 border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300">
+            <div className="flex justify-between items-center mb-5">
+              <h3 className="text-lg font-bold text-gray-900">Notifications</h3>
               <button 
                 onClick={markAllAsRead}
-                className="text-[11px] text-gray-400 hover:text-[#0C0C0C] transition-colors"
+                className="text-xs text-violet-500 hover:text-violet-700 font-bold transition-colors"
               >
                 Mark all read
               </button>
             </div>
-            <div className="space-y-0.5">
-              {notifications.map((item) => (
-                <div 
-                  key={item.id} 
-                  className={`flex gap-3 p-2 -mx-2 rounded-xl transition-all duration-200 group cursor-pointer ${
-                    !item.read ? 'bg-[#F7F9FB]' : 'hover:bg-[#F7F9FB]'
-                  }`}
-                >
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs transition-all ${
-                    !item.read ? 'bg-white shadow-md' : 'bg-[#F7F9FB] group-hover:bg-white'
-                  }`}>
-                    <item.icon className={`${!item.read ? 'text-[#0C0C0C]' : 'text-gray-400'}`} />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex justify-between items-start">
-                      <p className={`text-[13px] leading-tight transition-colors ${
-                        !item.read ? 'font-semibold text-[#0C0C0C]' : 'font-medium text-gray-600 group-hover:text-[#0C0C0C]'
+            <div className="space-y-2 max-h-[320px] overflow-y-auto pr-1">
+              {notifications.map((item) => {
+                const style = getNotificationStyle(item.type);
+                return (
+                  <div 
+                    key={item.id} 
+                    onClick={() => markAsRead(item.id)}
+                    className={`flex gap-3 p-3.5 rounded-[1.5rem] transition-all duration-300 cursor-pointer group border ${
+                      !item.read ? `${style.bg} ${style.border}` : 'hover:bg-gray-50 border-transparent'
+                    }`}
+                  >
+                    <div className={`w-10 h-10 rounded-[1rem] flex items-center justify-center flex-shrink-0 ${
+                      !item.read ? 'bg-white shadow-md' : 'bg-gray-100'
+                    } group-hover:scale-110 transition-transform duration-300`}>
+                      <item.icon className={`text-sm ${!item.read ? style.icon : 'text-gray-400'}`} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-xs truncate leading-tight transition-colors ${
+                        !item.read ? 'font-semibold text-gray-900' : 'text-gray-500 group-hover:text-gray-700'
                       }`}>
                         {item.text}
                       </p>
-                      {!item.read && (
-                        <span className="w-1.5 h-1.5 bg-[#0C0C0C] rounded-full mt-1.5"></span>
-                      )}
+                      <p className="text-[10px] text-gray-400 mt-1">{item.time}</p>
                     </div>
-                    <p className="text-[11px] text-gray-400 mt-0.5">{item.time}</p>
+                    {!item.read && (
+                      <span className={`w-2.5 h-2.5 ${style.dot} rounded-full mt-1.5 flex-shrink-0 animate-pulse shadow-sm`}></span>
+                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
-          {/* Activities */}
-          <div>
-            <h3 className="text-[13px] font-bold mb-3">Activities</h3>
-            <div className="space-y-1 relative pl-2">
-              <div className="absolute left-[18px] top-4 bottom-4 w-[2px] bg-[#F3F4F6] z-0"></div>
-              {rightPanelData.activities.map((item) => (
-                <div 
-                  key={item.id} 
-                  className="flex gap-3 relative z-10 p-2 -mx-2 rounded-xl hover:bg-[#F7F9FB] cursor-pointer transition-all duration-200 group"
-                >
-                  <div className="relative">
-                    <img 
-                      src={`https://ui-avatars.com/api/?name=${item.user}&background=F7F9FB&color=0C0C0C&font-size=0.4`} 
-                      alt={item.user} 
-                      className="w-7 h-7 rounded-full border-2 border-white shadow-sm transform group-hover:scale-110 transition-transform" 
-                    />
-                    <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-400 rounded-full border-2 border-white"></span>
-                  </div>
-                  <div>
-                    <p className="text-[13px] font-medium text-[#0C0C0C] leading-tight group-hover:text-[#0C0C0C] transition-colors">
-                      <span className="font-semibold">{item.user}</span> {item.text}
-                    </p>
-                    <p className="text-[11px] text-gray-400 mt-0.5">{item.time}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Contacts */}
-          <div>
-            <div className="flex justify-between items-center mb-3">
-              <h3 className="text-[13px] font-bold">Contacts</h3>
-              <button className="text-[11px] text-gray-400 hover:text-[#0C0C0C] transition-colors">
+          {/* Recent Activities - Super Rounded */}
+          <div className="bg-white rounded-[2.5rem] p-6 md:p-8 border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300">
+            <div className="flex justify-between items-center mb-5">
+              <h3 className="text-lg font-bold text-gray-900">Activities</h3>
+              <button className="text-xs text-violet-500 hover:text-violet-700 font-bold transition-colors">
                 View all
               </button>
             </div>
-            <div className="space-y-0.5">
-              {rightPanelData.contacts.map((contact, idx) => (
-                <div 
-                  key={idx} 
-                  className="flex items-center gap-3 p-2 -mx-2 rounded-xl hover:bg-[#F7F9FB] cursor-pointer transition-all duration-200 group"
-                >
-                  <div className="relative">
-                    <img 
-                      src={`https://ui-avatars.com/api/?name=${contact.name}&background=EDEEFC&color=0C0C0C&font-size=0.4`} 
-                      alt={contact.name} 
-                      className="w-8 h-8 rounded-full shadow-sm transform group-hover:scale-110 transition-transform" 
-                    />
-                    <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${
-                      contact.online ? 'bg-green-400' : 'bg-gray-300'
-                    }`}></span>
+            <div className="space-y-1 relative">
+              <div className="absolute left-[22px] top-10 bottom-4 w-[2.5px] bg-gradient-to-b from-violet-200 via-violet-100 to-transparent rounded-full"></div>
+              {[
+                { user: 'Anton', action: 'Completed service #1245', time: 'Just now', color: 'bg-emerald-500' },
+                { user: 'Bima', action: 'Booked Gentleman Cut', time: '15 min ago', color: 'bg-blue-500' },
+                { user: 'Rizky', action: 'Cancelled appointment', time: '45 min ago', color: 'bg-red-500' },
+                { user: 'Tomi', action: 'Purchased pomade', time: '1 hour ago', color: 'bg-amber-500' },
+                { user: 'Dewi', action: 'Left a 5-star review', time: '2 hours ago', color: 'bg-violet-500' },
+              ].map((item, idx) => (
+                <div key={idx} className="flex gap-3 relative pl-10 py-3 group cursor-pointer">
+                  <div className={`absolute left-[18px] top-4 w-3 h-3 ${item.color} rounded-full border-[3px] border-white z-10 shadow-md group-hover:scale-125 transition-transform`}></div>
+                  <img 
+                    src={`https://ui-avatars.com/api/?name=${item.user}&background=6366F1&color=fff&font-size=0.35&bold=true`} 
+                    alt={item.user} 
+                    className="w-10 h-10 rounded-[1rem] shadow-sm group-hover:scale-110 transition-transform duration-300" 
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-gray-700 leading-tight">
+                      <span className="font-semibold text-gray-900">{item.user}</span> {item.action}
+                    </p>
+                    <p className="text-[10px] text-gray-400 mt-1 flex items-center gap-1">
+                      <FaClock className="text-[8px]" />
+                      {item.time}
+                    </p>
                   </div>
-                  <div className="flex-1">
-                    <span className="text-[13px] text-[#0C0C0C] font-medium block group-hover:translate-x-1 transition-transform">
-                      {contact.name}
-                    </span>
-                    <span className="text-[11px] text-gray-400">
-                      {contact.online ? 'Online' : 'Offline'}
-                    </span>
-                  </div>
-                  {contact.online && (
-                    <button className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 bg-[#EDEEFC] rounded-full hover:bg-[#0C0C0C] hover:text-white">
-                      <FiChevronDown className="text-xs transform -rotate-90" />
-                    </button>
-                  )}
                 </div>
               ))}
             </div>
           </div>
-
         </div>
-
       </div>
 
-      {/* Floating Action Buttons */}
+      {/* ============ BACK TO TOP - Super Rounded ============ */}
       {showScrollTop && (
         <button 
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          className="fixed bottom-8 right-8 w-12 h-12 bg-[#0C0C0C] text-white rounded-full shadow-xl hover:shadow-2xl transform hover:scale-110 transition-all flex items-center justify-center animate-bounce"
+          className="fixed bottom-8 right-8 w-14 h-14 bg-gradient-to-br from-violet-500 to-purple-600 text-white rounded-[1.5rem] shadow-2xl hover:shadow-violet-500/25 transform hover:scale-110 transition-all duration-300 flex items-center justify-center group z-50"
         >
-          <FiChevronUp className="text-lg" />
+          <FiChevronUp className="text-2xl group-hover:-translate-y-1 transition-transform" />
         </button>
       )}
     </div>

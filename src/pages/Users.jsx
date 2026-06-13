@@ -1,4 +1,3 @@
-// src/pages/Users.jsx
 import React, { useState, useEffect } from 'react';
 import PageHeader from "../components/PageHeader";
 import Badge from "../components/Badge";
@@ -25,7 +24,7 @@ export default function Users() {
     setIsLoading(true);
     try {
       const data = await usersAPI.fetchUsers();
-      // Mengurutkan data agar admin di atas (opsional)
+   
       const sortedData = (data || []).sort((a, b) => {
         if (a.role === 'admin' && b.role !== 'admin') return -1;
         if (a.role !== 'admin' && b.role === 'admin') return 1;
@@ -53,7 +52,7 @@ export default function Users() {
 
   // --- Fungsi terkait Edit ---
   const handleOpenEdit = (user) => {
-    setEditData({ id: user.id, name: user.name, role: user.role || 'customer' });
+    setEditData({ id: user.id, name: user.name, role: user.role || 'Admin' });
     setIsModalOpen(true);
   };
 
