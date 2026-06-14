@@ -478,7 +478,7 @@ export default function LandingPage() {
         {/* Background Image - Fullscreen */}
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-105 animate-[kenburns_20s_ease-in-out_infinite alternate]"
-          style={{ backgroundImage: "url('/img/bb3.jpg')" }} // Memakai gambar barbershop Anda
+          style={{ backgroundImage: "url('/img/bb5.jpg')" }} // Memakai gambar barbershop Anda
         />
         
         {/* Dark Gradient Overlay untuk kontras teks */}
@@ -601,6 +601,7 @@ export default function LandingPage() {
       </section>
 
       {/* ============ SERVICES SECTION ============ */}
+     {/* ============ SERVICES SECTION ============ */}
       <section id="services" className="py-20 md:py-32 px-4 md:px-12 bg-gray-50 relative">
         <div className="max-w-7xl mx-auto">
           <FadeInSection delay={0}>
@@ -617,11 +618,12 @@ export default function LandingPage() {
             </div>
           </FadeInSection>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
             {[
-              { icon: FaCut, title: "Hot Towel Shave", desc: "Cukur premium dengan handuk hangat aromaterapi, krim cukur Italia.", price: "Rp 50k", duration: "30 min", badge: "Classic", featured: false },
-              { icon: FaCrown, title: "Royal Haircut", desc: "Potongan master barber, keramas premium, pijat kepala, styling eksklusif.", price: "Rp 75k", duration: "45 min", badge: "Popular", featured: true },
-              { icon: FaUserTie, title: "Natural Coloring", desc: "Pewarnaan organik, konsultasi personal, perawatan pasca-coloring.", price: "Rp 150k", duration: "60 min", badge: "Premium", featured: false }
+              { icon: FaCut, title: "HairCut Signature", desc: "Potongan rambut presisi dengan pencucian, pijat kepala ringan, dan styling premium.", price: "Rp 75.000", duration: "45 Min", badge: "Popular", featured: true },
+              { icon: FaUserTie, title: "Classic Shave", desc: "Cukur kumis dan jenggot tradisional menggunakan handuk hangat dan krim khusus.", price: "Rp 35.000", duration: "20 Min", badge: "Classic", featured: false },
+              { icon: FaRegCalendarCheck, title: "Hair Coloring", desc: "Pewarnaan rambut profesional. Pilihan warna natural hingga warna fashion kekinian.", price: "Rp 150.000", duration: "60 Min", badge: "Premium", featured: false },
+              { icon: FaSmile, title: "Gentleman Facial", desc: "Perawatan kulit wajah khusus pria untuk membersihkan komedo dan menyegarkan kulit.", price: "Rp 50.000", duration: "30 Min", badge: "Relax", featured: false }
             ].map((service, idx) => (
               <FadeInSection delay={idx * 80} key={idx} direction="scale" duration={600}>
                 <TiltCard maxTilt={6} className="h-full">
@@ -632,11 +634,11 @@ export default function LandingPage() {
                     <div className={`w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center mb-5 md:mb-6 transition-all duration-300 group-hover:scale-110 group-hover:rotate-6 ${service.featured ? 'bg-white/10' : 'bg-gray-100'}`}>
                       <service.icon className={`text-xl md:text-2xl ${service.featured ? 'text-white' : 'text-gray-800'}`} />
                     </div>
-                    <h3 className={`text-xl md:text-2xl font-bold mb-3 ${service.featured ? 'text-white' : 'text-gray-900'}`}>{service.title}</h3>
+                    <h3 className={`text-xl font-bold mb-3 ${service.featured ? 'text-white' : 'text-gray-900'}`}>{service.title}</h3>
                     <p className={`text-sm leading-relaxed mb-4 ${service.featured ? 'text-gray-400' : 'text-gray-500'}`}>{service.desc}</p>
                     <div className="flex items-center gap-2 text-xs text-gray-400 mb-5"><FaClock /><span>{service.duration}</span></div>
-                    <div className={`pt-4 border-t ${service.featured ? 'border-gray-800' : 'border-gray-100'}`}>
-                      <span className={`font-black text-2xl md:text-3xl ${service.featured ? 'text-white' : 'text-gray-900'}`}>{service.price}</span>
+                    <div className={`pt-4 border-t mt-auto ${service.featured ? 'border-gray-800' : 'border-gray-100'}`}>
+                      <span className={`font-black text-2xl ${service.featured ? 'text-white' : 'text-gray-900'}`}>{service.price}</span>
                     </div>
                   </div>
                 </TiltCard>
