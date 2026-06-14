@@ -647,7 +647,7 @@ export default function LandingPage() {
             <FadeInSection delay={0}>
               <TiltCard maxTilt={5}>
                 <div className="relative rounded-3xl md:rounded-[2.5rem] overflow-hidden shadow-2xl shadow-slate-200/50 aspect-[4/3] md:aspect-[16/10] lg:aspect-square">
-                  <img src="public/img/bb2.jpg" alt="HairCut Interior" className="w-full h-full object-cover hover:scale-110 transition-transform duration-700 ease-out" />
+                  <img src="/img/bb2.jpg" alt="HairCut Interior" className="w-full h-full object-cover hover:scale-110 transition-transform duration-700 ease-out" />
                   <div className="absolute inset-0 bg-gradient-to-t from-blue-900/30 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300" />
                 </div>
               </TiltCard>
