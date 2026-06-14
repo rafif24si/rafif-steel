@@ -478,7 +478,7 @@ export default function LandingPage() {
         {/* Background Image - Fullscreen */}
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-105 animate-[kenburns_20s_ease-in-out_infinite alternate]"
-          style={{ backgroundImage: "url('/img/bb5.jpg')" }} // Memakai gambar barbershop Anda
+          style={{ backgroundImage: "url('/img/bb6.png')" }} // Memakai gambar barbershop Anda
         />
         
         {/* Dark Gradient Overlay untuk kontras teks */}
