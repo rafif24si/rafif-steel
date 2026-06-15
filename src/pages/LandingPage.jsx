@@ -7,7 +7,7 @@ import {
   FaArrowRight, FaPlay, FaInstagram, FaTwitter, FaYoutube, FaEye,
   FaBars, FaTimes, FaChevronLeft, FaChevronRight, FaCrown, FaAward,
   FaShieldAlt, FaSmile, FaClock, FaMapMarkerAlt, FaPhone, FaEnvelope,
-  FaShoppingCart, FaGift, FaPercentage, FaFire, FaGem, FaRocket
+  FaShoppingCart, FaGift, FaPercentage, FaFire, FaGem, FaRocket, FaPaperPlane
 } from 'react-icons/fa';
 
 // ============ CUSTOM HOOKS ============
@@ -249,7 +249,6 @@ const ProductCard = ({ product, index }) => {
           </button>
           
           <div className="w-full aspect-square rounded-2xl mb-5 overflow-hidden relative bg-gradient-to-br from-gray-100 to-gray-200">
-            {/* Grayscale dihapus di sini agar gambar produk tampil berwarna */}
             <img src={product.img} alt={product.name} loading="lazy"
               className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 mix-blend-multiply" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -312,6 +311,9 @@ export default function LandingPage() {
   const [activeTestimonial, setActiveTestimonial] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
+  
+  // State untuk form kontak (Simulasi Proses Kirim Pesan)
+  const [contactStatus, setContactStatus] = useState('idle'); // 'idle' | 'submitting' | 'success'
 
   useEffect(() => {
     let ticking = false;
@@ -334,11 +336,30 @@ export default function LandingPage() {
     return () => clearInterval(interval);
   }, []);
 
+  // Fungsi untuk menangani Submit Form Kontak
+  const handleContactSubmit = (e) => {
+    e.preventDefault();
+    setContactStatus('submitting');
+    
+    // Simulasi loading/pengiriman data (1.5 detik)
+    setTimeout(() => {
+      setContactStatus('success');
+      e.target.reset(); // Mengosongkan form
+      
+      // Mengembalikan tombol ke keadaan semula setelah 3 detik
+      setTimeout(() => {
+        setContactStatus('idle');
+      }, 3000);
+    }, 1500);
+  };
+
   const menuLinks = [
     { href: "#about", label: "Tentang" },
     { href: "#services", label: "Layanan" },
+    { href: "#styles", label: "Style" },
     { href: "#products", label: "Produk" },
-    { href: "#vouchers", label: "Promo" }
+    { href: "#vouchers", label: "Promo" },
+    { href: "#contact", label: "Kontak" }
   ];
 
   const testimonials = [
@@ -354,6 +375,30 @@ export default function LandingPage() {
     { name: "Beard Oil Premium", price: "Rp 95.000", type: "Beard Care", rating: 4.9, reviews: 92, sold: 540, img: "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80", bestSeller: false, isNew: false, discount: null }
   ];
 
+  // Data 20 Style Rambut Lokal HD dari folder public/img
+  const hairStyles = [
+    { name: "Textured Crop", img: "/img/s1.jpg" },
+    { name: "Classic Pompadour", img: "/img/s2.jpg" },
+    { name: "Modern Quiff", img: "/img/s3.jpg" },
+    { name: "Clean Buzz Cut", img: "/img/s4.jpg" },
+    { name: "Skin Fade", img: "/img/s5.jpg" },
+    { name: "Executive Contour", img: "/img/s6.jpg" },
+    { name: "Slick Back Fade", img: "/img/s7.jpg" },
+    { name: "Modern Mullet", img: "/img/s8.jpg" },
+    { name: "Side Part", img: "/img/s9.jpg" },
+    { name: "French Crop", img: "/img/s10.jpg" },
+    { name: "Icy White Dye", img: "/img/s11.jpg" },
+    { name: "Wavy Long Quiff", img: "/img/s12.jpg" },
+    { name: "Combed Back", img: "/img/s13.jpg" },
+    { name: "Spiky Modern", img: "/img/s14.jpg" },
+    { name: "Drop Fade", img: "/img/s15.jpg" },
+    { name: "Two Block Cut", img: "/img/s16.jpg" },
+    { name: "Afro Textured", img: "/img/s17.jpg" },
+    { name: "Classic Taper", img: "/img/s18.jpg" },
+    { name: "Bowl Cut Modern", img: "/img/s19.jpg" },
+    { name: "Caesar Cut", img: "/img/s20.jpg" }
+  ];
+
   return (
     <div className="min-h-screen bg-[#F8FAFC] font-sans scroll-smooth selection:bg-gray-800 selection:text-white overflow-x-hidden">
       
@@ -367,10 +412,8 @@ export default function LandingPage() {
         <FaArrowRight className="transform -rotate-90" />
       </button>
 
-      {/* ============ LIQUID GLASS NAVBAR - SELALU ROUNDED ============ */}
-      {/* ============ LIQUID GLASS NAVBAR - SELALU ROUNDED ============ */}
+      {/* ============ LIQUID GLASS NAVBAR ============ */}
       <header className="fixed w-full z-50 flex justify-center transition-all duration-[800ms] ease-[cubic-bezier(0.16,1,0.3,1)]">
-        {/* PERBAIKAN: Menghapus overflow-hidden agar menu dropdown bisa tampil ke bawah */}
         <nav 
           className={`flex items-center justify-between transition-all duration-[800ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${
             isScrolled 
@@ -379,7 +422,6 @@ export default function LandingPage() {
           }`}
         >
           
-          {/* LOGO */}
           <Link to="/" className="flex items-center gap-3 group cursor-pointer z-50">
             <div className={`w-10 h-10 md:w-11 md:h-11 rounded-full md:rounded-xl flex items-center justify-center transition-all duration-500 ease-out group-hover:scale-105 group-hover:rotate-[15deg] ${
               isScrolled 
@@ -395,8 +437,7 @@ export default function LandingPage() {
             </span>
           </Link>
           
-          {/* MENU DESKTOP */}
-          <div className={`hidden md:flex items-center gap-8 text-[12px] font-bold tracking-[0.15em] uppercase transition-colors duration-500 ${
+          <div className={`hidden md:flex items-center gap-6 text-[11px] font-bold tracking-[0.1em] uppercase transition-colors duration-500 ${
             isScrolled ? 'text-gray-600' : 'text-gray-300'
           }`}>
             {menuLinks.map((item) => (
@@ -413,7 +454,6 @@ export default function LandingPage() {
             ))}
           </div>
 
-          {/* RIGHT SECTION (LOGIN & HAMBURGER) */}
           <div className="flex items-center gap-3 z-50">
             <Link 
               to="/login" 
@@ -431,7 +471,6 @@ export default function LandingPage() {
               </div>
             </Link>
 
-            {/* Tombol Hamburger Mobile */}
             <button 
               className={`md:hidden p-2.5 text-xl rounded-full transition-all duration-300 ${
                 isScrolled ? 'bg-gray-100 text-gray-800' : 'bg-white/10 text-white border border-white/20'
@@ -442,7 +481,6 @@ export default function LandingPage() {
             </button>
           </div>
 
-          {/* MOBILE MENU DROPDOWN */}
           <div 
             className={`absolute top-full left-0 w-full mt-3 bg-white/95 backdrop-blur-2xl shadow-2xl rounded-[2rem] border border-gray-100 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] md:hidden flex flex-col overflow-hidden ${
               isMobileMenuOpen ? 'max-h-[400px] opacity-100 translate-y-0 visible' : 'max-h-0 opacity-0 -translate-y-4 invisible'
@@ -475,18 +513,13 @@ export default function LandingPage() {
 
       {/* ============ HERO SECTION ============ */}
       <section className="relative h-screen min-h-[600px] w-full flex items-center justify-center overflow-hidden">
-        {/* Background Image - Fullscreen */}
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-105 animate-[kenburns_20s_ease-in-out_infinite alternate]"
-          style={{ backgroundImage: "url('/img/bb6.png')" }} // Memakai gambar barbershop Anda
+          style={{ backgroundImage: "url('/img/bb6.png')" }}
         />
-        
-        {/* Dark Gradient Overlay untuk kontras teks */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/50 to-[#0A0F1A]" />
 
-        {/* Content Wrapper */}
         <div className="relative z-10 w-full max-w-7xl mx-auto px-6 md:px-12 flex flex-col items-center mt-16 md:mt-24">
-          
           <FadeInSection delay={0}>
             <div className="inline-flex items-center gap-3 px-5 py-2 rounded-full bg-white/5 backdrop-blur-md border border-white/10 text-gray-300 text-[10px] md:text-xs font-bold tracking-[0.3em] uppercase mb-8 md:mb-12 shadow-2xl">
               <span className="w-1.5 h-1.5 rounded-full bg-gray-400 animate-pulse" />
@@ -519,14 +552,6 @@ export default function LandingPage() {
             </div>
           </FadeInSection>
         </div>
-
-        {/* Scroll Indicator (Mouse Style) */}
-        {/* <div className="absolute bottom-10 left-1/2 -translate-x-1/2 hidden md:flex flex-col items-center gap-3 opacity-60">
-          <span className="text-white text-[10px] uppercase tracking-[0.2em] font-bold">Scroll</span>
-          <div className="w-6 h-10 rounded-full border-2 border-white/40 flex justify-center p-1.5">
-            <div className="w-1.5 h-2.5 rounded-full bg-white animate-bounce" />
-          </div>
-        </div> */}
       </section>
 
       {/* ============ ABOUT SECTION ============ */}
@@ -539,7 +564,6 @@ export default function LandingPage() {
             <FadeInSection delay={0}>
               <TiltCard maxTilt={5}>
                 <div className="relative rounded-3xl md:rounded-[2.5rem] overflow-hidden shadow-2xl shadow-gray-200/50 aspect-[4/3] md:aspect-[16/10] lg:aspect-square">
-                  {/* Grayscale dihapus agar berwarna cerah sesuai asli */}
                   <img src="/img/bb2.jpg" alt="HairCut Interior" className="w-full h-full object-cover hover:scale-110 transition-transform duration-700 ease-out" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300" />
                 </div>
@@ -601,7 +625,6 @@ export default function LandingPage() {
       </section>
 
       {/* ============ SERVICES SECTION ============ */}
-     {/* ============ SERVICES SECTION ============ */}
       <section id="services" className="py-20 md:py-32 px-4 md:px-12 bg-gray-50 relative">
         <div className="max-w-7xl mx-auto">
           <FadeInSection delay={0}>
@@ -627,7 +650,7 @@ export default function LandingPage() {
             ].map((service, idx) => (
               <FadeInSection delay={idx * 80} key={idx} direction="scale" duration={600}>
                 <TiltCard maxTilt={6} className="h-full">
-                  <div className={`relative p-6 md:p-8 rounded-3xl md:rounded-[2.5rem] transition-all duration-300 group cursor-pointer h-full ${service.featured ? 'bg-gray-900 shadow-xl border border-gray-800' : 'bg-white shadow-md hover:shadow-xl border border-gray-200'}`}>
+                  <div className={`relative p-6 md:p-8 rounded-3xl md:rounded-[2.5rem] transition-all duration-300 group cursor-pointer h-full flex flex-col ${service.featured ? 'bg-gray-900 shadow-xl border border-gray-800' : 'bg-white shadow-md hover:shadow-xl border border-gray-200'}`}>
                     <div className={`absolute top-0 right-0 text-[10px] md:text-xs font-black px-4 md:px-5 py-1.5 md:py-2 rounded-bl-2xl shadow-sm ${service.featured ? 'bg-white text-black' : 'bg-gray-100 text-gray-700'}`}>
                       {service.badge}
                     </div>
@@ -635,7 +658,7 @@ export default function LandingPage() {
                       <service.icon className={`text-xl md:text-2xl ${service.featured ? 'text-white' : 'text-gray-800'}`} />
                     </div>
                     <h3 className={`text-xl font-bold mb-3 ${service.featured ? 'text-white' : 'text-gray-900'}`}>{service.title}</h3>
-                    <p className={`text-sm leading-relaxed mb-4 ${service.featured ? 'text-gray-400' : 'text-gray-500'}`}>{service.desc}</p>
+                    <p className={`text-sm leading-relaxed mb-4 flex-grow ${service.featured ? 'text-gray-400' : 'text-gray-500'}`}>{service.desc}</p>
                     <div className="flex items-center gap-2 text-xs text-gray-400 mb-5"><FaClock /><span>{service.duration}</span></div>
                     <div className={`pt-4 border-t mt-auto ${service.featured ? 'border-gray-800' : 'border-gray-100'}`}>
                       <span className={`font-black text-2xl ${service.featured ? 'text-white' : 'text-gray-900'}`}>{service.price}</span>
@@ -648,53 +671,41 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ============ PROMO SECTION ============ */}
-      <section id="vouchers" className="py-20 md:py-28 px-4 md:px-12 bg-zinc-800 relative overflow-hidden border-t border-zinc-700">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute inset-0" style={{ backgroundImage: `radial-gradient(circle at 20% 50%, white 1px, transparent 1px), radial-gradient(circle at 80% 50%, white 1px, transparent 1px)`, backgroundSize: '40px 40px' }} />
-        </div>
-        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-12 lg:gap-16 relative z-10">
-          <div className="w-full lg:w-1/2 text-white text-center lg:text-left">
-            <FadeInSection delay={0} direction="left">
-              <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/10 backdrop-blur-xl rounded-full text-[10px] md:text-xs font-bold tracking-widest uppercase mb-4 md:mb-6 border border-white/20">
-                <FaGift className="text-yellow-400" /> Promo Eksklusif
+      {/* ============ STYLE SECTION (20 Gambar Lokal) ============ */}
+      <section id="styles" className="py-20 md:py-32 px-4 md:px-12 bg-white relative border-t border-gray-100">
+        <div className="max-w-7xl mx-auto">
+          <FadeInSection delay={0}>
+            <div className="text-center mb-12 md:mb-16">
+              <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 text-gray-700 font-bold rounded-full text-[10px] md:text-xs tracking-widest uppercase mb-4">
+                <FaStar className="text-xs" /> Inspiration
               </span>
-              <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tight mb-4 md:mb-6 leading-[1.15]">
-                Klaim Voucher <br className="hidden md:block"/>Spesial Anda!
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-gray-900 tracking-tight mb-4">
+                Model Rambut <span className="text-gray-500">Pria</span>
               </h2>
-              <p className="text-gray-300 text-base md:text-lg mb-8 max-w-lg mx-auto lg:mx-0 leading-relaxed">
-                Daftar sebagai member HairCut sekarang dan nikmati diskon kunjungan pertama serta potongan harga produk eksklusif.
+              <p className="text-gray-500 text-base md:text-lg max-w-2xl mx-auto">
+                Temukan gaya rambut yang paling sesuai dengan karakter dan bentuk wajah Anda.
               </p>
-              <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
-                <Link to="/register" className="px-6 py-3.5 bg-white text-black font-bold rounded-full hover:bg-gray-200 transition-all duration-200 hover:-translate-y-1 shadow-xl text-sm flex items-center justify-center gap-2">
-                  <FaRocket className="text-gray-800" /> Daftar & Klaim <FaArrowRight className="text-xs" />
-                </Link>
-                <button className="px-6 py-3.5 border-2 border-white/30 text-white font-bold rounded-full hover:bg-white/10 transition-all duration-200 hover:-translate-y-1 text-sm flex items-center justify-center gap-2">
-                  <FaPercentage /> Lihat Semua Promo
-                </button>
-              </div>
-            </FadeInSection>
-          </div>
-          <div className="w-full lg:w-1/2 flex flex-col gap-4 md:gap-5">
-            {[
-              { discount: "Diskon 20%", title: "First Haircut", desc: "*Berlaku untuk transaksi pertama", category: "New Member", code: "WELCOME20", color: "yellow", borderColor: "border-yellow-400", dotColor: "bg-yellow-400" },
-              { discount: "Potongan 15k", title: "Pomade", desc: "*Berlaku semua varian", category: "Product Promo", code: "POMADE15", color: "emerald", borderColor: "border-emerald-400", dotColor: "bg-emerald-400" }
-            ].map((promo, idx) => (
-              <FadeInSection delay={idx * 150} direction="right" key={idx} duration={500}>
-                <TiltCard maxTilt={3}>
-                  <div className={`bg-white rounded-2xl md:rounded-3xl p-5 md:p-7 flex items-center justify-between border-l-[10px] md:border-l-[14px] ${promo.borderColor} shadow-xl relative overflow-hidden group hover:scale-[1.02] transition-transform duration-200 cursor-pointer`}>
-                    <div className={`absolute -left-[12px] md:-left-[16px] top-1/2 -translate-y-1/2 w-3 h-3 md:w-4 md:h-4 ${promo.dotColor} rounded-full animate-pulse`} />
-                    <div>
-                      <p className="text-[10px] md:text-xs font-black text-gray-500 uppercase tracking-widest mb-1">{promo.category}</p>
-                      <h4 className="text-xl sm:text-2xl md:text-3xl font-black text-gray-900 mb-1">{promo.discount} {promo.title}</h4>
-                      <p className="text-xs text-gray-500 mb-2">{promo.desc}</p>
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gray-100 rounded-full text-[10px]">
-                        <span className="text-gray-500">Kode:</span>
-                        <span className="font-bold text-black">{promo.code}</span>
-                      </span>
-                    </div>
-                    <div className="text-4xl md:text-5xl opacity-20 group-hover:opacity-30 transition-opacity duration-200">
-                      {promo.color === 'yellow' ? <FaTicketAlt className="text-yellow-500" /> : <FaShoppingBag className="text-emerald-500" />}
+            </div>
+          </FadeInSection>
+
+          {/* Penyesuaian Grid untuk 20 Gambar */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
+            {hairStyles.map((style, idx) => (
+              <FadeInSection delay={idx * 50} key={idx} direction="scale">
+                <TiltCard maxTilt={4} className="h-full">
+                  <div className="group relative rounded-2xl overflow-hidden aspect-[4/5] bg-gray-100 cursor-pointer shadow-sm hover:shadow-xl transition-all duration-300">
+                    <img 
+                      src={style.img} 
+                      alt={style.name} 
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                      loading="lazy" 
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover:opacity-80 transition-opacity duration-300" />
+                    <div className="absolute inset-0 p-4 md:p-6 flex flex-col justify-end">
+                      <h3 className="text-white font-bold text-lg md:text-xl transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300 leading-tight">
+                        {style.name}
+                      </h3>
+                      <div className="h-1 w-8 bg-white mt-3 opacity-0 group-hover:opacity-100 transition-all duration-300 delay-100 transform translate-y-4 group-hover:translate-y-0" />
                     </div>
                   </div>
                 </TiltCard>
@@ -704,8 +715,228 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ============ PRODUCTS SECTION (Berwarna Cerah) ============ */}
-      <section id="products" className="py-20 md:py-32 px-4 md:px-12 bg-gradient-to-b from-gray-50 to-white relative overflow-hidden">
+         
+
+      {/* ============ PROMO SECTION ============ */}
+
+
+
+      <section id="vouchers" className="py-20 md:py-28 px-4 md:px-12 bg-zinc-800 relative overflow-hidden border-t border-zinc-700">
+
+
+
+        <div className="absolute inset-0 opacity-10">
+
+
+
+          <div className="absolute inset-0" style={{ backgroundImage: `radial-gradient(circle at 20% 50%, white 1px, transparent 1px), radial-gradient(circle at 80% 50%, white 1px, transparent 1px)`, backgroundSize: '40px 40px' }} />
+
+
+
+        </div>
+
+
+
+        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-12 lg:gap-16 relative z-10">
+
+
+
+          <div className="w-full lg:w-1/2 text-white text-center lg:text-left">
+
+
+
+            <FadeInSection delay={0} direction="left">
+
+
+
+              <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/10 backdrop-blur-xl rounded-full text-[10px] md:text-xs font-bold tracking-widest uppercase mb-4 md:mb-6 border border-white/20">
+
+
+
+                <FaGift className="text-yellow-400" /> Promo Eksklusif
+
+
+
+              </span>
+
+
+
+              <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tight mb-4 md:mb-6 leading-[1.15]">
+
+
+
+                Klaim Voucher <br className="hidden md:block"/>Spesial Anda!
+
+
+
+              </h2>
+
+
+
+              <p className="text-gray-300 text-base md:text-lg mb-8 max-w-lg mx-auto lg:mx-0 leading-relaxed">
+
+
+
+                Daftar sebagai member HairCut sekarang dan nikmati diskon kunjungan pertama serta potongan harga produk eksklusif.
+
+
+
+              </p>
+
+
+
+              <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
+
+
+
+                <Link to="/register" className="px-6 py-3.5 bg-white text-black font-bold rounded-full hover:bg-gray-200 transition-all duration-200 hover:-translate-y-1 shadow-xl text-sm flex items-center justify-center gap-2">
+
+
+
+                  <FaRocket className="text-gray-800" /> Daftar & Klaim <FaArrowRight className="text-xs" />
+
+
+
+                </Link>
+
+
+
+                <button className="px-6 py-3.5 border-2 border-white/30 text-white font-bold rounded-full hover:bg-white/10 transition-all duration-200 hover:-translate-y-1 text-sm flex items-center justify-center gap-2">
+
+
+
+                  <FaPercentage /> Lihat Semua Promo
+
+
+
+                </button>
+
+
+
+              </div>
+
+
+
+            </FadeInSection>
+
+
+
+          </div>
+
+
+
+          <div className="w-full lg:w-1/2 flex flex-col gap-4 md:gap-5">
+
+
+
+            {[
+
+
+
+              { discount: "Diskon 20%", title: "First Haircut", desc: "*Berlaku untuk transaksi pertama", category: "New Member", code: "WELCOME20", color: "yellow", borderColor: "border-yellow-400", dotColor: "bg-yellow-400" },
+
+
+
+              { discount: "Potongan 15k", title: "Pomade", desc: "*Berlaku semua varian", category: "Product Promo", code: "POMADE15", color: "emerald", borderColor: "border-emerald-400", dotColor: "bg-emerald-400" }
+
+
+
+            ].map((promo, idx) => (
+
+
+
+              <FadeInSection delay={idx * 150} direction="right" key={idx} duration={500}>
+
+
+
+                <TiltCard maxTilt={3}>
+
+
+
+                  <div className={`bg-white rounded-2xl md:rounded-3xl p-5 md:p-7 flex items-center justify-between border-l-[10px] md:border-l-[14px] ${promo.borderColor} shadow-xl relative overflow-hidden group hover:scale-[1.02] transition-transform duration-200 cursor-pointer`}>
+
+
+
+                    <div className={`absolute -left-[12px] md:-left-[16px] top-1/2 -translate-y-1/2 w-3 h-3 md:w-4 md:h-4 ${promo.dotColor} rounded-full animate-pulse`} />
+
+
+
+                    <div>
+
+
+
+                      <p className="text-[10px] md:text-xs font-black text-gray-500 uppercase tracking-widest mb-1">{promo.category}</p>
+
+
+
+                      <h4 className="text-xl sm:text-2xl md:text-3xl font-black text-gray-900 mb-1">{promo.discount} {promo.title}</h4>
+
+
+
+                      <p className="text-xs text-gray-500 mb-2">{promo.desc}</p>
+
+
+
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gray-100 rounded-full text-[10px]">
+
+
+
+                        <span className="text-gray-500">Kode:</span>
+
+
+
+                        <span className="font-bold text-black">{promo.code}</span>
+
+
+
+                      </span>
+
+
+
+                    </div>
+
+
+
+                    <div className="text-4xl md:text-5xl opacity-20 group-hover:opacity-30 transition-opacity duration-200">
+
+
+
+                      {promo.color === 'yellow' ? <FaTicketAlt className="text-yellow-500" /> : <FaShoppingBag className="text-emerald-500" />}
+
+
+
+                    </div>
+
+
+
+                  </div>
+
+
+
+                </TiltCard>
+
+
+
+              </FadeInSection>
+
+
+
+            ))}
+
+
+
+          </div>
+
+
+
+        </div>
+
+
+
+      </section>
+
+      {/* ============ PRODUCTS SECTION ============ */}
+      <section id="products" className="py-20 md:py-32 px-4 md:px-12 bg-gray-50 relative overflow-hidden border-t border-gray-200">
         <div className="absolute inset-0 opacity-[0.03]">
           <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(circle at 20% 80%, #9CA3AF 1.5px, transparent 1.5px), radial-gradient(circle at 80% 20%, #9CA3AF 1.5px, transparent 1.5px)', backgroundSize: '60px 60px' }} />
         </div>
@@ -713,7 +944,7 @@ export default function LandingPage() {
           <FadeInSection delay={0}>
             <div className="flex flex-col md:flex-row justify-between items-center md:items-end mb-12 md:mb-16 gap-4 text-center md:text-left">
               <div>
-                <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-200 text-gray-700 font-bold rounded-full text-[10px] md:text-xs tracking-widest uppercase mb-4">
+                <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-white text-gray-700 font-bold rounded-full text-[10px] md:text-xs tracking-widest uppercase mb-4 border border-gray-200 shadow-sm">
                   <FaShoppingBag className="text-xs" /> Our Collection
                 </span>
                 <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-gray-900 tracking-tight">
@@ -732,7 +963,7 @@ export default function LandingPage() {
           
           <FadeInSection delay={300}>
             <div className="text-center mt-12 md:mt-16">
-              <div className="inline-flex items-center gap-3 px-6 py-4 bg-gray-100 rounded-2xl border border-gray-200">
+              <div className="inline-flex items-center gap-3 px-6 py-4 bg-white rounded-2xl border border-gray-200 shadow-sm">
                 <FaShoppingBag className="text-gray-600 text-xl" />
                 <p className="text-sm font-semibold text-gray-700">
                   Gratis ongkir untuk pembelian di atas <span className="text-black font-black">Rp 200.000</span>
@@ -743,87 +974,152 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ============ TESTIMONIALS ============ */}
-      <section className="py-20 md:py-32 px-4 md:px-12 bg-black text-white relative overflow-hidden border-t border-gray-800">
-        <ParticleBackground />
-        <div className="max-w-5xl mx-auto relative z-10">
-          <FadeInSection delay={0}>
-            <div className="text-center mb-12 md:mb-16">
-              <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/10 backdrop-blur-xl rounded-full text-[10px] md:text-xs font-bold tracking-widest uppercase mb-4 border border-white/20 text-gray-300">
-                <FaStar className="text-gray-400 text-[10px]" /> Testimonials
-              </span>
-              <h2 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight mb-4">
-                Apa Kata <span className="text-gray-400">Mereka?</span>
-              </h2>
-              <p className="text-gray-400 text-base">Review nyata dari pelanggan setia.</p>
-            </div>
-          </FadeInSection>
+      {/* ============ CONTACT SECTION (SPLIT LAYOUT) ============ */}
+      <section id="contact" className="py-20 md:py-32 relative bg-gray-50 overflow-hidden">
+        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(circle at 50% 50%, #000000 1px, transparent 1px)', backgroundSize: '30px 30px' }} />
+        
+        <div className="max-w-7xl mx-auto px-4 md:px-12 relative z-10">
+          <div className="bg-white rounded-[2.5rem] md:rounded-[3.5rem] overflow-hidden shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] flex flex-col lg:flex-row border border-gray-100">
+            
+            {/* LEFT: Info Column (Dark) */}
+            <div className="w-full lg:w-5/12 p-10 md:p-16 bg-zinc-900 relative overflow-hidden flex flex-col justify-center">
+              <div className="absolute top-0 left-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -translate-y-1/2 -translate-x-1/2" />
+              
+              <FadeInSection delay={0} direction="right">
+                <span className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 text-white font-bold rounded-full text-[10px] md:text-xs tracking-widest uppercase mb-8 border border-white/20 backdrop-blur-md shadow-lg">
+                  <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" /> Let's Connect
+                </span>
+                
+                <h2 className="text-4xl sm:text-5xl md:text-6xl font-black text-white tracking-tighter mb-6 leading-[1.1]">
+                  Hubungi <br />
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-gray-400 to-gray-600">HairCut.</span>
+                </h2>
+                
+                <p className="text-gray-400 text-base md:text-lg mb-12 leading-relaxed max-w-sm">
+                  Punya pertanyaan tentang layanan atau ingin konsultasi gaya rambut? Tim expert kami siap membantu Anda tampil maksimal.
+                </p>
 
-          <div className="relative">
-            <div className="overflow-hidden">
-              <div className="flex transition-transform duration-500 ease-out" style={{ transform: `translateX(-${activeTestimonial * 100}%)` }}>
-                {testimonials.map((testi, idx) => (
-                  <div key={idx} className="w-full flex-shrink-0 px-4">
-                    <TiltCard>
-                      <div className="bg-gray-900/80 backdrop-blur-xl p-8 md:p-10 rounded-3xl md:rounded-[2.5rem] relative border border-gray-700 hover:border-gray-500 transition-all duration-300">
-                        <FaQuoteLeft className="text-6xl md:text-8xl text-black absolute top-6 right-8 opacity-40" />
-                        <div className="flex text-yellow-400 mb-6 text-lg gap-1">
-                          {[...Array(5)].map((_, i) => <FaStar key={i} />)}
-                        </div>
-                        <p className="text-gray-300 italic mb-8 text-lg md:text-xl leading-relaxed relative z-10">"{testi.review}"</p>
-                        <div className="flex items-center gap-4 pt-6 border-t border-gray-800">
-                          <div className="w-14 h-14 bg-gray-800 rounded-full flex items-center justify-center font-bold text-xl border border-gray-600 text-white">{testi.avatar}</div>
-                          <div>
-                            <h4 className="font-bold text-white text-lg">{testi.name}</h4>
-                            <p className="text-sm text-gray-500">{testi.role}</p>
-                          </div>
-                        </div>
+                <div className="space-y-8 relative">
+                  <div className="absolute left-[23px] top-[24px] bottom-[24px] w-px bg-gradient-to-b from-white/20 via-white/5 to-transparent hidden md:block" />
+
+                  {[
+                    { icon: FaMapMarkerAlt, title: "Headquarters", detail: "Jl. Premium Barbershop No. 123", subDetail: "Jakarta Selatan, 12345" },
+                    { icon: FaPhone, title: "Direct Line", detail: "+62 812 3456 7890", subDetail: "Senin - Minggu (09:00 - 21:00)" },
+                    { icon: FaEnvelope, title: "Email Address", detail: "hello@haircut.id", subDetail: "Kami membalas dalam 24 jam" }
+                  ].map((item, idx) => (
+                    <div key={idx} className="flex items-start gap-6 group relative z-10">
+                      <div className="w-12 h-12 rounded-full bg-black flex items-center justify-center flex-shrink-0 border border-zinc-800 shadow-lg group-hover:scale-110 group-hover:bg-white group-hover:border-white transition-all duration-500 overflow-hidden">
+                        <item.icon className="text-gray-400 text-lg group-hover:text-black transition-colors duration-500 group-hover:rotate-12" />
                       </div>
-                    </TiltCard>
-                  </div>
-                ))}
-              </div>
+                      <div className="pt-1">
+                        <h4 className="font-bold text-white mb-1.5 tracking-wide text-lg group-hover:text-gray-300 transition-colors">{item.title}</h4>
+                        <p className="text-sm font-medium text-gray-300">{item.detail}</p>
+                        <p className="text-xs text-gray-500 mt-1">{item.subDetail}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </FadeInSection>
             </div>
-            
-            <button onClick={() => setActiveTestimonial(prev => (prev - 1 + testimonials.length) % testimonials.length)}
-              className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 md:-translate-x-4 w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center hover:bg-white/20 transition-all duration-200">
-              <FaChevronLeft />
-            </button>
-            <button onClick={() => setActiveTestimonial(prev => (prev + 1) % testimonials.length)}
-              className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 md:translate-x-4 w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center hover:bg-white/20 transition-all duration-200">
-              <FaChevronRight />
-            </button>
-            
-            <div className="flex justify-center gap-2 mt-8">
-              {testimonials.map((_, idx) => (
-                <button key={idx} onClick={() => setActiveTestimonial(idx)}
-                  className={`transition-all duration-200 rounded-full ${idx === activeTestimonial ? 'w-8 h-2.5 bg-white' : 'w-2.5 h-2.5 bg-gray-700 hover:bg-gray-500'}`} />
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
 
-      {/* ============ CTA SECTION ============ */}
-      <section className="py-20 md:py-28 px-4 md:px-12 bg-gray-900 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-[0.05]" style={{ backgroundImage: 'radial-gradient(circle at 50% 50%, #9CA3AF 1px, transparent 1px)', backgroundSize: '25px 25px' }} />
-        <div className="max-w-4xl mx-auto text-center relative z-10">
-          <FadeInSection delay={0} direction="scale" duration={600}>
-            <h2 className="text-3xl sm:text-4xl md:text-6xl font-black text-white tracking-tight mb-6">
-              Siap Untuk <span className="text-gray-400">Transformasi?</span>
-            </h2>
-            <p className="text-gray-400 text-base md:text-xl mb-10 max-w-2xl mx-auto leading-relaxed">
-              Bergabunglah dengan ribuan pria yang telah mempercayakan gaya mereka. Booking sekarang dan dapatkan diskon 20%!
-            </p>
-            <div className="flex flex-col sm:flex-row justify-center gap-4">
-              <Link to="/register" className="px-8 py-4 font-bold text-black bg-white rounded-full hover:bg-gray-200 transition-all duration-200 shadow-xl text-base flex items-center justify-center gap-2">
-                <FaRocket /> Booking Sekarang
-              </Link>
-              <a href="tel:+62123456789" className="px-8 py-4 font-bold text-white border-2 border-white/30 rounded-full hover:bg-white/10 transition-all duration-200 text-base flex items-center justify-center gap-2">
-                <FaPhone /> Hubungi Kami
-              </a>
+            {/* RIGHT: Form Column (Light) */}
+            <div className="w-full lg:w-7/12 p-10 md:p-16 bg-white relative">
+              <FadeInSection delay={200} direction="left">
+                
+                <div className="mb-10">
+                  <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3">Kirim Pesan</h3>
+                  <p className="text-gray-500 text-sm">Isi form di bawah ini dan kami akan segera menghubungi Anda kembali.</p>
+                </div>
+                
+                <form className="space-y-8" onSubmit={handleContactSubmit}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="relative group">
+                      <input 
+                        type="text" 
+                        id="name"
+                        required
+                        disabled={contactStatus !== 'idle'}
+                        className="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-2xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all peer text-sm" 
+                        placeholder="Nama Lengkap" 
+                      />
+                      <label htmlFor="name" className="absolute -top-6 left-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest transition-all">
+                        Nama Lengkap
+                      </label>
+                    </div>
+
+                    <div className="relative group">
+                      <input 
+                        type="email" 
+                        id="email"
+                        required
+                        disabled={contactStatus !== 'idle'}
+                        className="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-2xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all peer text-sm" 
+                        placeholder="john@example.com" 
+                      />
+                      <label htmlFor="email" className="absolute -top-6 left-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest transition-all">
+                        Alamat Email
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="relative group">
+                    <input 
+                      type="text" 
+                      id="subject"
+                      required
+                      disabled={contactStatus !== 'idle'}
+                      className="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-2xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all peer text-sm" 
+                      placeholder="Konsultasi Gaya Rambut / Booking" 
+                    />
+                    <label htmlFor="subject" className="absolute -top-6 left-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest transition-all">
+                      Subjek Pesanan / Pertanyaan
+                    </label>
+                  </div>
+
+                  <div className="relative group pt-2">
+                    <label htmlFor="message" className="absolute -top-4 left-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest transition-all z-10">
+                      Pesan
+                    </label>
+                    <textarea 
+                      id="message"
+                      rows="4" 
+                      required
+                      disabled={contactStatus !== 'idle'}
+                      className="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-2xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all resize-none text-sm placeholder-gray-400" 
+                      placeholder="Jelaskan kebutuhan gaya rambut atau pertanyaan Anda di sini..."
+                    ></textarea>
+                  </div>
+
+                  <button 
+                    type="submit" 
+                    disabled={contactStatus !== 'idle'}
+                    className={`w-full font-black uppercase tracking-widest rounded-2xl py-5 transition-all duration-300 flex items-center justify-center gap-3 mt-4 text-xs group ${
+                      contactStatus === 'idle' 
+                        ? 'bg-black text-white hover:bg-zinc-800 shadow-[0_10px_20px_rgba(0,0,0,0.1)] hover:-translate-y-1' 
+                        : contactStatus === 'submitting'
+                          ? 'bg-gray-200 text-gray-500 cursor-wait'
+                          : 'bg-green-500 text-white shadow-[0_10px_20px_rgba(34,197,94,0.2)]'
+                    }`}
+                  >
+                    {contactStatus === 'idle' && (
+                      <>Kirim Pesan Sekarang <FaPaperPlane className="transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-1" /></>
+                    )}
+                    {contactStatus === 'submitting' && (
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 border-2 border-gray-500 border-t-transparent rounded-full animate-spin" />
+                        Mengirim...
+                      </div>
+                    )}
+                    {contactStatus === 'success' && (
+                      <>Pesan Terkirim! <FaCheckCircle className="text-lg" /></>
+                    )}
+                  </button>
+                </form>
+
+              </FadeInSection>
             </div>
-          </FadeInSection>
+            
+          </div>
         </div>
       </section>
 
@@ -840,7 +1136,7 @@ export default function LandingPage() {
               </div>
               <p className="text-gray-500 text-sm max-w-sm leading-relaxed mb-4">Premium barbershop experience since 2024.</p>
               <div className="space-y-2 text-sm">
-                <div className="flex items-center gap-2"><FaMapMarkerAlt className="text-gray-600 text-xs" /><span>Jl. Premium No. 123, Jakarta</span></div>
+                <div className="flex items-center gap-2"><FaMapMarkerAlt className="text-gray-600 text-xs" /><span>Jl. Premium Barbershop No. 123, Jakarta</span></div>
                 <div className="flex items-center gap-2"><FaPhone className="text-gray-600 text-xs" /><span>+62 123 4567 89</span></div>
                 <div className="flex items-center gap-2"><FaEnvelope className="text-gray-600 text-xs" /><span>info@haircut.id</span></div>
               </div>
