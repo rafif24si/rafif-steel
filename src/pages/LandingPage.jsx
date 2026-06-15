@@ -454,23 +454,34 @@ export default function LandingPage() {
             ))}
           </div>
 
-          <div className="flex items-center gap-3 z-50">
+         <div className="flex items-center gap-3 z-50">
+            {/* Tombol Login Member (Ditambahkan) */}
+            <Link 
+              to="/login-member" 
+              className={`hidden sm:inline-flex items-center gap-2 px-6 py-2.5 text-xs font-bold rounded-full transition-all duration-500 ease-out hover:-translate-y-0.5 shadow-lg ${
+                isScrolled 
+                  ? 'bg-black text-white hover:bg-gray-800' 
+                  : 'bg-white text-black hover:bg-gray-200'
+              }`}
+            >
+              <span>Member</span>
+              <FaUserTie className="text-[10px]" />
+            </Link>
+
+            {/* Tombol Login Admin (Diperbarui tampilannya agar beda dengan Member) */}
             <Link 
               to="/login" 
-              className={`hidden sm:inline-flex items-center gap-2 px-6 py-2.5 text-xs md:text-sm font-bold rounded-full transition-all duration-500 ease-out hover:-translate-y-0.5 ${
+              className={`hidden sm:inline-flex items-center gap-2 px-5 py-2.5 text-xs font-bold rounded-full transition-all duration-500 ease-out hover:-translate-y-0.5 ${
                 isScrolled 
-                  ? 'bg-gray-900 text-white hover:bg-black shadow-md hover:shadow-gray-900/30' 
+                  ? 'bg-white text-gray-700 border border-gray-200 hover:border-gray-900 hover:text-black shadow-sm' 
                   : 'bg-white/10 backdrop-blur-md text-white border border-white/20 hover:bg-white hover:text-black shadow-lg'
               }`}
             >
-              <span>Login Admin</span>
-              <div className={`w-6 h-6 rounded-full flex items-center justify-center transition-colors duration-300 ${
-                isScrolled ? 'bg-white/20 text-white' : 'bg-black/20 text-white group-hover:bg-black group-hover:text-white'
-              }`}>
-                 <FaArrowRight className="text-[10px]" />
-              </div>
+              <span>Admin</span>
+              <FaShieldAlt className="text-[10px]" />
             </Link>
 
+            {/* Tombol Hamburger Mobile */}
             <button 
               className={`md:hidden p-2.5 text-xl rounded-full transition-all duration-300 ${
                 isScrolled ? 'bg-gray-100 text-gray-800' : 'bg-white/10 text-white border border-white/20'
