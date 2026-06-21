@@ -548,7 +548,8 @@ export default function LandingPage() {
           <FadeInSection delay={400}>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 w-full px-4 sm:px-0">
               <Link 
-                to="/register" 
+                to="/login-member" 
+                state={{ from: '/booking' }}
                 className="group w-full sm:w-auto px-10 py-4 font-bold text-black bg-white rounded-full transition-all duration-500 hover:bg-gray-200 hover:-translate-y-1 flex items-center justify-center gap-3 shadow-[0_0_30px_rgba(255,255,255,0.2)]"
               >
                 Booking Sekarang
@@ -626,7 +627,7 @@ export default function LandingPage() {
                 ))}
               </div>
               <div className="flex gap-3">
-                <Link to="/register" className="inline-flex items-center gap-2 px-6 py-3.5 bg-gray-900 text-white font-bold rounded-full hover:bg-black transition-all duration-200 hover:-translate-y-1 shadow-lg text-sm">
+                <Link to="/login-member" className="inline-flex items-center gap-2 px-6 py-3.5 bg-gray-900 text-white font-bold rounded-full hover:bg-black transition-all duration-200 hover:-translate-y-1 shadow-lg text-sm">
                   Booking <FaArrowRight className="text-xs" />
                 </Link>
               </div>
@@ -682,16 +683,43 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ============ STYLE SECTION (20 Gambar Lokal) ============ */}
-      <section id="styles" className="py-20 md:py-32 px-4 md:px-12 bg-white relative border-t border-gray-100">
+    {/* ============ STYLE SECTION (Animasi Vertical Marquee) ============ */}
+      <section id="styles" className="py-20 md:py-32 px-4 md:px-12 bg-white relative border-t border-gray-100 overflow-hidden">
+        
+     {/* CSS Khusus untuk Animasi Marquee */}
+        <style>{`
+          @keyframes marqueeUp {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-50%); }
+          }
+          @keyframes marqueeDown {
+            0% { transform: translateY(-50%); }
+            100% { transform: translateY(0); }
+          }
+          
+          /* WAKTU DIPERCEPAT MENJADI 15s (sebelumnya 30s) */
+          .animate-marquee-up {
+            animation: marqueeUp 10s linear infinite; 
+          }
+          .animate-marquee-down {
+            animation: marqueeDown 10s linear infinite;
+          }
+
+          /* Pause animasi saat di hover (Opsional, agar user bisa melihat detail) */
+          .pause-marquee:hover .animate-marquee-up,
+          .pause-marquee:hover .animate-marquee-down {
+            animation-play-state: paused;
+          }
+        `}</style>
+
         <div className="max-w-7xl mx-auto">
           <FadeInSection delay={0}>
             <div className="text-center mb-12 md:mb-16">
               <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 text-gray-700 font-bold rounded-full text-[10px] md:text-xs tracking-widest uppercase mb-4">
-                <FaStar className="text-xs" /> Inspiration
+                <FaStar className="text-yellow-500" /> Inspiration
               </span>
               <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-gray-900 tracking-tight mb-4">
-                Model Rambut <span className="text-gray-500">Pria</span>
+                Model Rambut <span className="text-transparent bg-clip-text bg-gradient-to-r from-gray-500 to-gray-800">Pria</span>
               </h2>
               <p className="text-gray-500 text-base md:text-lg max-w-2xl mx-auto">
                 Temukan gaya rambut yang paling sesuai dengan karakter dan bentuk wajah Anda.
@@ -699,33 +727,105 @@ export default function LandingPage() {
             </div>
           </FadeInSection>
 
-          {/* Penyesuaian Grid untuk 20 Gambar */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-6">
-            {hairStyles.map((style, idx) => (
-              <FadeInSection delay={idx * 50} key={idx} direction="scale">
-                <TiltCard maxTilt={4} className="h-full">
-                  <div className="group relative rounded-2xl overflow-hidden aspect-[4/5] bg-gray-100 cursor-pointer shadow-sm hover:shadow-xl transition-all duration-300">
-                    <img 
-                      src={style.img} 
-                      alt={style.name} 
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                      loading="lazy" 
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 group-hover:opacity-80 transition-opacity duration-300" />
-                    <div className="absolute inset-0 p-4 md:p-6 flex flex-col justify-end">
-                      <h3 className="text-white font-bold text-lg md:text-xl transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300 leading-tight">
-                        {style.name}
-                      </h3>
-                      <div className="h-1 w-8 bg-white mt-3 opacity-0 group-hover:opacity-100 transition-all duration-300 delay-100 transform translate-y-4 group-hover:translate-y-0" />
-                    </div>
+          {/* Area Scrolling Marquee */}
+          <FadeInSection delay={100}>
+            {/* Menggunakan flex dan height tetap agar gambar bisa scroll di dalamnya */}
+            <div className="flex gap-4 md:gap-6 h-[500px] md:h-[700px] overflow-hidden pause-marquee relative">
+              
+              {/* Efek Gradasi Putih Atas & Bawah agar scroll terlihat lebih smooth */}
+              <div className="absolute top-0 left-0 right-0 h-20 bg-gradient-to-b from-white to-transparent z-10 pointer-events-none"></div>
+              <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-white to-transparent z-10 pointer-events-none"></div>
+
+              {/* Kolom 1 (Bergerak ke Atas) */}
+              <div className="flex-1 flex flex-col gap-4 md:gap-6 animate-marquee-up">
+                {/* Kita render 2 kali (asli & duplikat) agar scroll tidak pernah putus */}
+                {[...hairStyles.slice(0, 4), ...hairStyles.slice(0, 4)].map((style, idx) => (
+                  <div key={idx} className="w-full">
+                    <TiltCard maxTilt={5}>
+                      <div className="group relative rounded-2xl overflow-hidden aspect-[4/5] bg-gray-100 cursor-pointer shadow-sm">
+                        <img src={style.img} alt={style.name} className="w-full h-full object-cover" loading="lazy" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                        <div className="absolute inset-0 p-4 flex flex-col justify-end opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-4 group-hover:translate-y-0">
+                          <h3 className="text-white font-bold text-lg md:text-xl leading-tight">{style.name}</h3>
+                        </div>
+                      </div>
+                    </TiltCard>
                   </div>
-                </TiltCard>
-              </FadeInSection>
-            ))}
-          </div>
+                ))}
+              </div>
+
+              {/* Kolom 2 (Bergerak ke Bawah) */}
+              <div className="flex-1 flex flex-col gap-4 md:gap-6 animate-marquee-down">
+                {[...hairStyles.slice(4, 8), ...hairStyles.slice(4, 8)].map((style, idx) => (
+                  <div key={idx} className="w-full">
+                    <TiltCard maxTilt={5}>
+                      <div className="group relative rounded-2xl overflow-hidden aspect-[3/4] bg-gray-100 cursor-pointer shadow-sm">
+                        <img src={style.img} alt={style.name} className="w-full h-full object-cover" loading="lazy" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <div className="absolute inset-0 p-4 flex flex-col justify-end opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-4 group-hover:translate-y-0">
+                          <h3 className="text-white font-bold text-lg md:text-xl leading-tight">{style.name}</h3>
+                        </div>
+                      </div>
+                    </TiltCard>
+                  </div>
+                ))}
+              </div>
+
+              {/* Kolom 3 (Bergerak ke Atas) - Disembunyikan di Mobile kecil */}
+              <div className="hidden sm:flex flex-1 flex-col gap-4 md:gap-6 animate-marquee-up">
+                {[...hairStyles.slice(8, 12), ...hairStyles.slice(8, 12)].map((style, idx) => (
+                  <div key={idx} className="w-full">
+                    <TiltCard maxTilt={5}>
+                      <div className="group relative rounded-2xl overflow-hidden aspect-[4/5] bg-gray-100 cursor-pointer shadow-sm">
+                        <img src={style.img} alt={style.name} className="w-full h-full object-cover" loading="lazy" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <div className="absolute inset-0 p-4 flex flex-col justify-end opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-4 group-hover:translate-y-0">
+                          <h3 className="text-white font-bold text-lg md:text-xl leading-tight">{style.name}</h3>
+                        </div>
+                      </div>
+                    </TiltCard>
+                  </div>
+                ))}
+              </div>
+
+              {/* Kolom 4 (Bergerak ke Bawah) - Disembunyikan di Tablet ke bawah */}
+              <div className="hidden md:flex flex-1 flex-col gap-4 md:gap-6 animate-marquee-down">
+                {[...hairStyles.slice(12, 16), ...hairStyles.slice(12, 16)].map((style, idx) => (
+                  <div key={idx} className="w-full">
+                    <TiltCard maxTilt={5}>
+                      <div className="group relative rounded-2xl overflow-hidden aspect-[3/4] bg-gray-100 cursor-pointer shadow-sm">
+                        <img src={style.img} alt={style.name} className="w-full h-full object-cover" loading="lazy" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <div className="absolute inset-0 p-4 flex flex-col justify-end opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-4 group-hover:translate-y-0">
+                          <h3 className="text-white font-bold text-lg md:text-xl leading-tight">{style.name}</h3>
+                        </div>
+                      </div>
+                    </TiltCard>
+                  </div>
+                ))}
+              </div>
+
+              {/* Kolom 5 (Bergerak ke Atas) - Hanya muncul di Desktop Besar */}
+              <div className="hidden lg:flex flex-1 flex-col gap-4 md:gap-6 animate-marquee-up">
+                {[...hairStyles.slice(16, 20), ...hairStyles.slice(16, 20)].map((style, idx) => (
+                  <div key={idx} className="w-full">
+                    <TiltCard maxTilt={5}>
+                      <div className="group relative rounded-2xl overflow-hidden aspect-[4/5] bg-gray-100 cursor-pointer shadow-sm">
+                        <img src={style.img} alt={style.name} className="w-full h-full object-cover" loading="lazy" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <div className="absolute inset-0 p-4 flex flex-col justify-end opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-4 group-hover:translate-y-0">
+                          <h3 className="text-white font-bold text-lg md:text-xl leading-tight">{style.name}</h3>
+                        </div>
+                      </div>
+                    </TiltCard>
+                  </div>
+                ))}
+              </div>
+
+            </div>
+          </FadeInSection>
         </div>
       </section>
-
          
 
       {/* ============ PROMO SECTION ============ */}
