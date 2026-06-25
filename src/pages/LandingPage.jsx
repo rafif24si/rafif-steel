@@ -1,15 +1,17 @@
 import FloatingChat from "./../components/FloatingChat";
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
   FaCut, FaUserTie, FaRegCalendarCheck, FaStar, FaStarHalfAlt, FaRegStar,
   FaQuoteLeft, FaTicketAlt, FaShoppingBag, FaCheckCircle, FaHeart, FaRegHeart,
   FaArrowRight, FaPlay, FaInstagram, FaTwitter, FaYoutube, FaEye,
   FaBars, FaTimes, FaChevronLeft, FaChevronRight, FaCrown, FaAward,
   FaShieldAlt, FaSmile, FaClock, FaMapMarkerAlt, FaPhone, FaEnvelope,
-  FaShoppingCart, FaGift, FaPercentage, FaFire, FaGem, FaRocket, FaPaperPlane
+  FaShoppingCart, FaGift, FaPercentage, FaFire, FaGem, FaRocket, FaPaperPlane,
+  FaWhatsapp, FaSearch, FaPen, FaTrash
 } from 'react-icons/fa';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { supabase } from "../lib/supabaseClient";
 
 // ============ CUSTOM HOOKS ============
 const useCountUp = (end, duration = 2000, startCounting = false) => {
@@ -207,7 +209,7 @@ const ParticleBackground = () => {
 };
 
 // ============ PRODUCT CARD ============
-const ProductCard = ({ product, index }) => {
+const ProductCard = ({ product, index, onBuy }) => {
   const [isLiked, setIsLiked] = useState(false);
 
   const renderStars = (rating) => {
@@ -255,8 +257,11 @@ const ProductCard = ({ product, index }) => {
             <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             
             <div className="absolute inset-x-4 bottom-4 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
-              <button className="w-full bg-white/95 backdrop-blur-sm text-black py-3 rounded-xl font-bold text-xs hover:bg-black hover:text-white transition-all duration-200 shadow-xl flex items-center justify-center gap-2">
-                <FaEye className="text-sm" /> Quick View
+              <button 
+                onClick={(e) => { e.preventDefault(); onBuy(product); }}
+                className="w-full bg-white/95 backdrop-blur-sm text-black py-3 rounded-xl font-bold text-xs hover:bg-black hover:text-white transition-all duration-200 shadow-xl flex items-center justify-center gap-2"
+              >
+                <FaShoppingCart className="text-sm" /> Beli Sekarang
               </button>
             </div>
           </div>
@@ -295,7 +300,10 @@ const ProductCard = ({ product, index }) => {
                 )}
               </div>
               
-              <button className="w-10 h-10 rounded-xl bg-gray-900 text-white flex items-center justify-center hover:bg-black transition-all duration-200 hover:scale-110 hover:shadow-lg opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0">
+              <button 
+                onClick={(e) => { e.preventDefault(); onBuy(product); }}
+                className="w-10 h-10 rounded-xl bg-gray-900 text-white flex items-center justify-center hover:bg-black transition-all duration-200 hover:scale-110 hover:shadow-lg opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0"
+              >
                 <FaShoppingCart className="text-sm" />
               </button>
             </div>
@@ -308,14 +316,52 @@ const ProductCard = ({ product, index }) => {
 
 // ============ MAIN LANDING PAGE ============
 export default function LandingPage() {
+  const navigate = useNavigate();
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeTestimonial, setActiveTestimonial] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
+  const [isBackToTopWhite, setIsBackToTopWhite] = useState(false);
   const [selectedService, setSelectedService] = useState(null);
   
-  // State untuk form kontak (Simulasi Proses Kirim Pesan)
+  // State untuk form Booking & Cek Status (Repurposed from Contact)
+  const [bookingNama, setBookingNama] = useState('');
+  const [bookingWa, setBookingWa] = useState('');
+  const [bookingLayanan, setBookingLayanan] = useState('');
+  const [bookingTanggal, setBookingTanggal] = useState('');
   const [contactStatus, setContactStatus] = useState('idle'); // 'idle' | 'submitting' | 'success'
+  
+  const [cekStatusResult, setCekStatusResult] = useState('');
+  const [cekStatusError, setCekStatusError] = useState('');
+  const [cekStatusData, setCekStatusData] = useState(null);
+
+  // State untuk Checkout Produk
+  const [buyingProduct, setBuyingProduct] = useState(null);
+  const [buyerEmail, setBuyerEmail] = useState('');
+  const [isBuying, setIsBuying] = useState(false);
+  const [buySuccess, setBuySuccess] = useState(false);
+
+  // State untuk Auth & Testimoni
+  const [userSession, setUserSession] = useState(null);
+  const [reviewsData, setReviewsData] = useState([]);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [reviewForm, setReviewForm] = useState({ id: null, rating: 5, review: '' });
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('haircut_reviews')
+          .select('*')
+          .order('created_at', { ascending: false });
+        if (!error && data) setReviewsData(data);
+      } catch (err) {
+        console.error("Error fetching reviews", err);
+      }
+    };
+    fetchReviews();
+  }, []);
 
   useEffect(() => {
     let ticking = false;
@@ -324,12 +370,39 @@ export default function LandingPage() {
         window.requestAnimationFrame(() => {
           setIsScrolled(window.scrollY > 30);
           setShowBackToTop(window.scrollY > 600);
+          
+          // Deteksi dark section untuk tombol back-to-top
+          const darkSections = ['vouchers', 'footer'];
+          let isOverDark = false;
+          const buttonY = window.innerHeight - 110; 
+          
+          for (const id of darkSections) {
+            const el = id === 'footer' ? document.querySelector('footer') : document.getElementById(id);
+            if (el) {
+              const rect = el.getBoundingClientRect();
+              if (rect.top <= buttonY && rect.bottom >= buttonY) {
+                isOverDark = true;
+                break;
+              }
+            }
+          }
+          setIsBackToTopWhite(isOverDark);
+          
           ticking = false;
         });
         ticking = true;
       }
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
+    
+    // Autofill email jika user sedang login
+    const savedEmail = localStorage.getItem('userEmail');
+    if (savedEmail) {
+      setBuyerEmail(savedEmail);
+      setBookingWa(savedEmail);
+      setUserSession(savedEmail);
+    }
+    
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -338,21 +411,133 @@ export default function LandingPage() {
     return () => clearInterval(interval);
   }, []);
 
-  // Fungsi untuk menangani Submit Form Kontak
-  const handleContactSubmit = (e) => {
+  const handleBuyProduct = async (e) => {
     e.preventDefault();
-    setContactStatus('submitting');
+    if (!buyerEmail || !buyingProduct) return;
+    setIsBuying(true);
     
-    // Simulasi loading/pengiriman data (1.5 detik)
-    setTimeout(() => {
-      setContactStatus('success');
-      e.target.reset(); // Mengosongkan form
+    try {
+      const originalPrice = parseInt(buyingProduct.price.replace(/\D/g, ''));
+      const finalPrice = buyingProduct.discount ? originalPrice * (1 - buyingProduct.discount / 100) : originalPrice;
       
-      // Mengembalikan tombol ke keadaan semula setelah 3 detik
+      const { error } = await supabase
+        .from('product_orders')
+        .insert([{
+          email: buyerEmail,
+          items: buyingProduct.name + ' (1x)',
+          total_harga: finalPrice,
+          status: 'Diproses'
+        }]);
+        
+      if (error) throw error;
+      
+      setBuySuccess(true);
       setTimeout(() => {
+        setBuySuccess(false);
+        setBuyingProduct(null);
+      }, 2000);
+    } catch (error) {
+      console.error("Error ordering product:", error);
+      alert(`Gagal memesan produk: ${error.message || 'Kesalahan pada database'}. Pastikan tabel product_orders sudah dibuat.`);
+    } finally {
+      setIsBuying(false);
+    }
+  };
+
+  const handleCekStatus = async (e) => {
+    e.preventDefault();
+    if (!bookingWa) {
+      setCekStatusError('Masukkan Email terlebih dahulu.');
+      setTimeout(() => setCekStatusError(''), 3000);
+      return;
+    }
+    
+    setContactStatus('submitting');
+    setCekStatusError('');
+    setCekStatusResult('');
+    setCekStatusData(null);
+    
+    try {
+      const emailInput = bookingWa.toLowerCase().trim();
+      
+      const { data: bookings, error: bookingsError } = await supabase
+        .from('haircut_bookings')
+        .select('*')
+        .eq('email', emailInput)
+        .order('created_at', { ascending: false });
+        
+      const { data: orders, error: ordersError } = await supabase
+        .from('product_orders')
+        .select('*')
+        .eq('email', emailInput)
+        .order('created_at', { ascending: false });
+        
+      if (bookingsError) throw bookingsError;
+      if (ordersError) throw ordersError;
+      
+      if ((bookings && bookings.length > 0) || (orders && orders.length > 0)) {
+        setContactStatus('success');
+        setCekStatusData({ bookings: bookings || [], orders: orders || [] });
+      } else {
         setContactStatus('idle');
-      }, 3000);
-    }, 1500);
+        setCekStatusError('Tidak ada layanan atau produk yang di pesan.');
+      }
+    } catch (error) {
+      console.error("Error checking status:", error);
+      setContactStatus('idle');
+      setCekStatusError('Gagal memeriksa status koneksi ke database.');
+    }
+  };
+
+  const handleReviewSubmit = async (e) => {
+    e.preventDefault();
+    if (!userSession) return;
+    setIsSubmittingReview(true);
+    
+    try {
+      if (reviewForm.id) {
+        // UPDATE
+        const { error } = await supabase
+          .from('haircut_reviews')
+          .update({ rating: reviewForm.rating, review: reviewForm.review })
+          .eq('id', reviewForm.id);
+        if (error) throw error;
+      } else {
+        // CREATE
+        const { error } = await supabase
+          .from('haircut_reviews')
+          .insert([{
+            email: userSession,
+            name: userSession.split('@')[0], 
+            rating: reviewForm.rating,
+            review: reviewForm.review
+          }]);
+        if (error) throw error;
+      }
+      
+      const { data } = await supabase.from('haircut_reviews').select('*').order('created_at', { ascending: false });
+      if (data) setReviewsData(data);
+      
+      setIsReviewModalOpen(false);
+      setReviewForm({ id: null, rating: 5, review: '' });
+    } catch (error) {
+      console.error("Error submitting review:", error);
+      alert(`Gagal menyimpan ulasan: ${error.message}`);
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  };
+
+  const handleDeleteReview = async (id) => {
+    if (!window.confirm("Apakah Anda yakin ingin menghapus ulasan ini?")) return;
+    try {
+      const { error } = await supabase.from('haircut_reviews').delete().eq('id', id);
+      if (error) throw error;
+      setReviewsData(prev => prev.filter(r => r.id !== id));
+    } catch (error) {
+      console.error("Error deleting review:", error);
+      alert(`Gagal menghapus ulasan: ${error.message}`);
+    }
   };
 
   const menuLinks = [
@@ -361,7 +546,8 @@ export default function LandingPage() {
     { href: "#styles", label: "Style" },
     { href: "#products", label: "Produk" },
     { href: "#vouchers", label: "Promo" },
-    { href: "#contact", label: "Kontak" }
+    { href: "#contact", label: "Status" },
+    { href: "#reviews", label: "Ulasan" }
   ];
 
   const testimonials = [
@@ -404,15 +590,29 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-[#F8FAFC] font-sans scroll-smooth selection:bg-gray-800 selection:text-white overflow-x-hidden">
       
+      {/* Scroll to Top Button */}
       <button 
         onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-        className={`fixed bottom-6 right-6 z-50 w-12 h-12 bg-gray-900 text-white rounded-2xl flex items-center justify-center shadow-xl hover:bg-black transition-all duration-300 hover:scale-110 ${
+        className={`fixed bottom-[88px] right-6 z-50 w-12 h-12 rounded-2xl flex items-center justify-center shadow-xl transition-all duration-300 hover:scale-110 ${
           showBackToTop ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
+        } ${
+          isBackToTopWhite ? 'bg-white text-black hover:bg-zinc-200' : 'bg-gray-900 text-white hover:bg-black'
         }`}
         aria-label="Back to top"
       >
         <FaArrowRight className="transform -rotate-90" />
       </button>
+
+      {/* WhatsApp CS Button */}
+      <a 
+        href="https://wa.me/6281234567890?text=Halo%20Haircut,%20saya%20ingin%20konsultasi%20atau%20booking%20jadwal%20potong%20rambut."
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-6 right-6 z-50 w-12 h-12 bg-green-500 text-white rounded-2xl flex items-center justify-center shadow-xl hover:bg-green-600 transition-all duration-300 hover:scale-110"
+        aria-label="Chat WhatsApp CS"
+      >
+        <FaWhatsapp className="text-2xl" />
+      </a>
 
       {/* ============ LIQUID GLASS NAVBAR ============ */}
       <header className="fixed w-full z-50 flex justify-center transition-all duration-[800ms] ease-[cubic-bezier(0.16,1,0.3,1)]">
@@ -439,7 +639,7 @@ export default function LandingPage() {
             </span>
           </Link>
           
-          <div className={`hidden md:flex items-center gap-6 text-[11px] font-bold tracking-[0.1em] uppercase transition-colors duration-500 ${
+          <div className={`hidden lg:flex items-center gap-6 text-[11px] font-bold tracking-[0.1em] uppercase transition-colors duration-500 ${
             isScrolled ? 'text-gray-600' : 'text-gray-300'
           }`}>
             {menuLinks.map((item) => (
@@ -466,7 +666,7 @@ export default function LandingPage() {
             {/* Tombol Login Member (Ditambahkan) */}
             <Link 
               to="/login-member" 
-              className={`hidden sm:inline-flex items-center gap-2 px-6 py-2.5 text-xs font-bold rounded-full transition-all duration-500 ease-out hover:-translate-y-0.5 shadow-lg ${
+              className={`hidden lg:inline-flex items-center gap-2 px-6 py-2.5 text-xs font-bold rounded-full transition-all duration-500 ease-out hover:-translate-y-0.5 shadow-lg ${
                 isScrolled 
                   ? 'bg-black text-white hover:bg-gray-800' 
                   : 'bg-white text-black hover:bg-gray-200'
@@ -479,7 +679,7 @@ export default function LandingPage() {
             {/* Tombol Login Admin (Diperbarui tampilannya agar beda dengan Member) */}
             <Link 
               to="/login" 
-              className={`hidden sm:inline-flex items-center gap-2 px-5 py-2.5 text-xs font-bold rounded-full transition-all duration-500 ease-out hover:-translate-y-0.5 ${
+              className={`hidden lg:inline-flex items-center gap-2 px-5 py-2.5 text-xs font-bold rounded-full transition-all duration-500 ease-out hover:-translate-y-0.5 ${
                 isScrolled 
                   ? 'bg-white text-gray-700 border border-gray-200 hover:border-gray-900 hover:text-black shadow-sm' 
                   : 'bg-white/10 backdrop-blur-md text-white border border-white/20 hover:bg-white hover:text-black shadow-lg'
@@ -491,7 +691,7 @@ export default function LandingPage() {
 
             {/* Tombol Hamburger Mobile */}
             <button 
-              className={`md:hidden p-2.5 text-xl rounded-full transition-all duration-300 ${
+              className={`lg:hidden p-2.5 text-xl rounded-full transition-all duration-300 ${
                 isScrolled ? 'bg-gray-100 text-gray-800' : 'bg-white/10 text-white border border-white/20'
               }`}
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -501,8 +701,8 @@ export default function LandingPage() {
           </div>
 
           <div 
-            className={`absolute top-full left-0 w-full mt-3 bg-white/95 backdrop-blur-2xl shadow-2xl rounded-[2rem] border border-gray-100 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] md:hidden flex flex-col overflow-hidden ${
-              isMobileMenuOpen ? 'max-h-[400px] opacity-100 translate-y-0 visible' : 'max-h-0 opacity-0 -translate-y-4 invisible'
+            className={`absolute top-full left-0 w-full mt-3 bg-white/95 backdrop-blur-2xl shadow-2xl rounded-[2rem] border border-gray-100 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] lg:hidden flex flex-col overflow-hidden ${
+              isMobileMenuOpen ? 'max-h-[600px] opacity-100 translate-y-0 visible' : 'max-h-0 opacity-0 -translate-y-4 invisible'
             }`}
           >
             <div className="p-4 flex flex-col gap-2">
@@ -522,13 +722,20 @@ export default function LandingPage() {
                   {item.label}
                 </a>
               ))}
-              <div className="px-2 pt-2 mt-2 border-t border-gray-200">
+              <div className="px-2 pt-4 mt-2 border-t border-gray-200 flex flex-col gap-3">
+                <Link 
+                  to="/login-member"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center justify-center gap-2 w-full bg-black text-white font-bold py-4 rounded-2xl shadow-lg hover:bg-gray-800 transition-colors duration-300"
+                >
+                  <FaUserTie className="text-sm" /> Login Member
+                </Link>
                 <Link 
                   to="/login"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="flex items-center justify-center gap-2 w-full bg-gray-900 text-white font-bold py-4 rounded-2xl shadow-lg hover:bg-black transition-colors duration-300"
+                  className="flex items-center justify-center gap-2 w-full bg-gray-100 text-gray-800 font-bold py-4 rounded-2xl border border-gray-200 hover:bg-gray-200 transition-colors duration-300"
                 >
-                  Login Admin <FaArrowRight className="text-xs" />
+                  <FaShieldAlt className="text-sm" /> Login Admin
                 </Link>
               </div>
             </div>
@@ -642,7 +849,7 @@ export default function LandingPage() {
               </div>
               <div className="flex gap-3">
                 <Link to="/login-member" className="inline-flex items-center gap-2 px-6 py-3.5 bg-gray-900 text-white font-bold rounded-full hover:bg-black transition-all duration-200 hover:-translate-y-1 shadow-lg text-sm">
-                  Booking <FaArrowRight className="text-xs" />
+                  Daftar Member <FaArrowRight className="text-xs" />
                 </Link>
               </div>
             </FadeInSection>
@@ -1124,7 +1331,7 @@ export default function LandingPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 md:gap-6 lg:gap-8">
             {products.map((prod, idx) => (
-              <ProductCard key={idx} product={prod} index={idx} />
+              <ProductCard key={idx} product={prod} index={idx} onBuy={setBuyingProduct} />
             ))}
           </div>
           
@@ -1194,73 +1401,41 @@ export default function LandingPage() {
               <FadeInSection delay={200} direction="left">
                 
                 <div className="mb-10">
-                  <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3">Kirim Pesan</h3>
-                  <p className="text-gray-500 text-sm">Isi form di bawah ini dan kami akan segera menghubungi Anda kembali.</p>
+                  <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3">Cek Status Booking</h3>
+                  <p className="text-gray-500 text-sm">Masukkan Email atau No WA Anda untuk masuk ke Dashboard Member dan melihat status antrean.</p>
                 </div>
                 
-                <form className="space-y-8" onSubmit={handleContactSubmit}>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div className="relative group">
-                      <input 
-                        type="text" 
-                        id="name"
-                        required
-                        disabled={contactStatus !== 'idle'}
-                        className="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-2xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all peer text-sm" 
-                        placeholder="Nama Lengkap" 
-                      />
-                      <label htmlFor="name" className="absolute -top-6 left-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest transition-all">
-                        Nama Lengkap
-                      </label>
-                    </div>
-
-                    <div className="relative group">
-                      <input 
-                        type="email" 
-                        id="email"
-                        required
-                        disabled={contactStatus !== 'idle'}
-                        className="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-2xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all peer text-sm" 
-                        placeholder="john@example.com" 
-                      />
-                      <label htmlFor="email" className="absolute -top-6 left-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest transition-all">
-                        Alamat Email
-                      </label>
-                    </div>
-                  </div>
-
+                <form className="space-y-8" onSubmit={handleCekStatus}>
                   <div className="relative group">
                     <input 
                       type="text" 
-                      id="subject"
+                      id="email"
                       required
+                      value={bookingWa}
+                      onChange={(e) => setBookingWa(e.target.value)}
                       disabled={contactStatus !== 'idle'}
                       className="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-2xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all peer text-sm" 
-                      placeholder="Konsultasi Gaya Rambut / Booking" 
+                      placeholder="contoh@email.com / 081234567890" 
                     />
-                    <label htmlFor="subject" className="absolute -top-6 left-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest transition-all">
-                      Subjek Pesanan / Pertanyaan
+                    <label htmlFor="email" className="absolute -top-6 left-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest transition-all">
+                      Email / Nomor WA
                     </label>
-                  </div>
-
-                  <div className="relative group pt-2">
-                    <label htmlFor="message" className="absolute -top-4 left-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest transition-all z-10">
-                      Pesan
-                    </label>
-                    <textarea 
-                      id="message"
-                      rows="4" 
-                      required
-                      disabled={contactStatus !== 'idle'}
-                      className="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-2xl px-5 py-4 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all resize-none text-sm placeholder-gray-400" 
-                      placeholder="Jelaskan kebutuhan gaya rambut atau pertanyaan Anda di sini..."
-                    ></textarea>
+                    {cekStatusResult && (
+                      <p className="absolute -bottom-6 left-2 text-[10px] font-bold text-blue-600 uppercase tracking-widest">
+                        {cekStatusResult}
+                      </p>
+                    )}
+                    {cekStatusError && (
+                      <p className="absolute -bottom-6 left-2 text-[10px] font-bold text-red-500 uppercase tracking-widest">
+                        {cekStatusError}
+                      </p>
+                    )}
                   </div>
 
                   <button 
                     type="submit" 
                     disabled={contactStatus !== 'idle'}
-                    className={`w-full font-black uppercase tracking-widest rounded-2xl py-5 transition-all duration-300 flex items-center justify-center gap-3 mt-4 text-xs group ${
+                    className={`w-full font-black uppercase tracking-widest rounded-2xl py-5 transition-all duration-300 flex items-center justify-center gap-3 text-xs group mt-4 ${
                       contactStatus === 'idle' 
                         ? 'bg-black text-white hover:bg-zinc-800 shadow-[0_10px_20px_rgba(0,0,0,0.1)] hover:-translate-y-1' 
                         : contactStatus === 'submitting'
@@ -1269,23 +1444,137 @@ export default function LandingPage() {
                     }`}
                   >
                     {contactStatus === 'idle' && (
-                      <>Kirim Pesan Sekarang <FaPaperPlane className="transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-1" /></>
+                      <>Cek Status Sekarang <FaSearch className="transition-transform duration-300 group-hover:scale-110" /></>
                     )}
                     {contactStatus === 'submitting' && (
                       <div className="flex items-center gap-2">
                         <div className="w-4 h-4 border-2 border-gray-500 border-t-transparent rounded-full animate-spin" />
-                        Mengirim...
+                        Memeriksa Data...
                       </div>
                     )}
                     {contactStatus === 'success' && (
-                      <>Pesan Terkirim! <FaCheckCircle className="text-lg" /></>
+                      <>Mengalihkan... <FaCheckCircle className="text-lg" /></>
                     )}
                   </button>
                 </form>
 
+                {/* HASIL CEK STATUS RENDER DISINI */}
+                {cekStatusData && (
+                  <div className="mt-8 space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    {cekStatusData.bookings.length > 0 && (
+                      <div className="p-5 bg-white border border-gray-200 rounded-2xl shadow-sm">
+                        <h4 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2"><FaCut className="text-black"/> Jadwal Booking Aktif</h4>
+                        <div className="space-y-3">
+                          {cekStatusData.bookings.map(b => (
+                            <div key={b.id} className="p-3 bg-gray-50 rounded-xl border border-gray-100 flex justify-between items-center">
+                              <div>
+                                <p className="text-xs font-bold text-gray-800">{b.layanan}</p>
+                                <p className="text-[10px] text-gray-500">{b.tanggal} • {b.waktu} • {b.kapster}</p>
+                              </div>
+                              <span className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded-md text-[10px] font-bold uppercase">{b.status}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {cekStatusData.orders.length > 0 && (
+                      <div className="p-5 bg-white border border-gray-200 rounded-2xl shadow-sm">
+                        <h4 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2"><FaShoppingBag className="text-black"/> Pesanan Produk</h4>
+                        <div className="space-y-3">
+                          {cekStatusData.orders.map(o => (
+                            <div key={o.id} className="p-3 bg-gray-50 rounded-xl border border-gray-100 flex justify-between items-center">
+                              <div>
+                                <p className="text-xs font-bold text-gray-800 line-clamp-1">{o.items}</p>
+                                <p className="text-[10px] text-gray-500">Rp {o.total_harga} • Resi: {o.resi || '-'}</p>
+                              </div>
+                              <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-md text-[10px] font-bold uppercase">{o.status}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
               </FadeInSection>
             </div>
             
+          </div>
+        </div>
+      </section>
+
+      {/* ============ TESTIMONIAL SECTION ============ */}
+      <section id="reviews" className="py-20 md:py-32 bg-white relative border-t border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 md:px-12">
+          <FadeInSection delay={0}>
+            <div className="flex flex-col md:flex-row justify-between items-center mb-12 md:mb-16 gap-6">
+              <div className="text-center md:text-left">
+                <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-200 text-gray-700 font-bold rounded-full text-[10px] md:text-xs tracking-widest uppercase mb-4">
+                  <FaStar className="text-yellow-500" /> Ulasan Pelanggan
+                </span>
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-gray-900 tracking-tight">
+                  Apa Kata <span className="text-gray-500">Mereka</span>
+                </h2>
+              </div>
+              {userSession && (
+                <button 
+                  onClick={() => {
+                    setReviewForm({ id: null, rating: 5, review: '' });
+                    setIsReviewModalOpen(true);
+                  }}
+                  className="bg-black text-white px-6 py-3 rounded-full font-bold text-sm flex items-center gap-2 hover:bg-gray-800 transition-colors shadow-lg"
+                >
+                  <FaPen className="text-xs" /> Tulis Ulasan
+                </button>
+              )}
+            </div>
+          </FadeInSection>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {(reviewsData.length > 0 ? reviewsData : testimonials).map((rev, idx) => (
+              <FadeInSection key={rev.id || idx} delay={idx * 100}>
+                <div className="bg-gray-50 p-8 rounded-[2rem] border border-gray-100 shadow-sm hover:shadow-xl transition-shadow relative group h-full flex flex-col">
+                  
+                  {/* Invisible CRUD */}
+                  {userSession && rev.email === userSession && (
+                    <div className="absolute top-6 right-6 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button 
+                        onClick={() => {
+                          setReviewForm({ id: rev.id, rating: rev.rating, review: rev.review });
+                          setIsReviewModalOpen(true);
+                        }}
+                        className="text-gray-400 hover:text-blue-500 transition-colors"
+                      >
+                        <FaPen className="text-sm" />
+                      </button>
+                      <button 
+                        onClick={() => handleDeleteReview(rev.id)}
+                        className="text-gray-400 hover:text-red-500 transition-colors"
+                      >
+                        <FaTrash className="text-sm" />
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="flex gap-1 mb-4">
+                    {[...Array(5)].map((_, i) => (
+                      <FaStar key={i} className={i < rev.rating ? "text-yellow-400" : "text-gray-200"} />
+                    ))}
+                  </div>
+                  <p className="text-gray-600 mb-6 line-clamp-4 leading-relaxed">"{rev.review}"</p>
+                  <div className="flex items-center gap-4 mt-auto pt-4 border-t border-gray-200">
+                    <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center font-black text-gray-400 shadow-sm border border-gray-100">
+                      {rev.avatar || (rev.name ? rev.name.substring(0, 2).toUpperCase() : "HC")}
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-gray-900">{rev.name}</h4>
+                      <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-0.5">{rev.role || "Member"}</p>
+                    </div>
+                  </div>
+                </div>
+              </FadeInSection>
+            ))}
           </div>
         </div>
       </section>
@@ -1342,6 +1631,112 @@ export default function LandingPage() {
         </div>
       </footer>
       <FloatingChat />
+      
+      {/* MODAL TULIS ULASAN */}
+      {isReviewModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white rounded-[2rem] w-full max-w-md overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300 relative border border-slate-100">
+            <div className="bg-slate-800 p-6 text-center text-white relative">
+              <button 
+                onClick={() => setIsReviewModalOpen(false)} 
+                className="absolute top-3 right-3 p-3 z-50 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-all cursor-pointer"
+              >
+                <FaTimes className="text-white text-lg" />
+              </button>
+              <h3 className="text-2xl font-black tracking-widest pt-4">{reviewForm.id ? "Edit Ulasan" : "Tulis Ulasan"}</h3>
+            </div>
+            <div className="p-8">
+              <form onSubmit={handleReviewSubmit}>
+                <div className="mb-6 text-center">
+                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-widest mb-3">Rating Anda</label>
+                  <div className="flex justify-center gap-2">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        type="button"
+                        key={star}
+                        onClick={() => setReviewForm(prev => ({ ...prev, rating: star }))}
+                        className="focus:outline-none transition-transform hover:scale-110"
+                      >
+                        <FaStar className={`text-3xl ${reviewForm.rating >= star ? "text-yellow-400" : "text-gray-200"}`} />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="mb-6">
+                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-widest mb-2">Ulasan</label>
+                  <textarea 
+                    required 
+                    rows={4}
+                    value={reviewForm.review}
+                    onChange={(e) => setReviewForm(prev => ({ ...prev, review: e.target.value }))}
+                    className="w-full bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl px-4 py-3 focus:outline-none focus:border-black transition-all resize-none" 
+                    placeholder="Bagaimana pengalaman Anda?"
+                  ></textarea>
+                </div>
+                <button 
+                  type="submit" 
+                  disabled={isSubmittingReview}
+                  className="w-full bg-black text-white font-bold py-4 rounded-xl hover:bg-zinc-800 transition-all flex justify-center items-center gap-2 disabled:bg-gray-200 disabled:text-gray-500"
+                >
+                  {isSubmittingReview ? "Menyimpan..." : "Simpan Ulasan"}
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* MODAL CHECKOUT PRODUK */}
+      {buyingProduct && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white rounded-[2rem] w-full max-w-sm overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300 relative border border-slate-100">
+            <div className="bg-slate-800 p-6 text-center text-white relative overflow-hidden">
+              <button 
+                onClick={() => setBuyingProduct(null)} 
+                className="absolute top-3 right-3 p-3 z-50 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-all cursor-pointer"
+              >
+                <FaTimes className="text-white text-lg" />
+              </button>
+              <h3 className="text-2xl font-black tracking-widest relative z-10 pt-4">Checkout</h3>
+            </div>
+            <div className="p-8">
+              <div className="flex gap-4 items-center mb-6 border-b border-gray-100 pb-6">
+                <img src={buyingProduct.img} alt={buyingProduct.name} className="w-16 h-16 rounded-xl object-cover" />
+                <div>
+                  <h4 className="font-bold text-gray-900 leading-tight">{buyingProduct.name}</h4>
+                  <p className="text-xs text-emerald-600 font-bold mt-1">
+                    {buyingProduct.discount ? `Rp ${(parseInt(buyingProduct.price.replace(/\D/g, '')) * (1 - buyingProduct.discount / 100)).toLocaleString('id-ID')}` : buyingProduct.price}
+                  </p>
+                </div>
+              </div>
+              <form onSubmit={handleBuyProduct}>
+                <div className="mb-6">
+                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-widest mb-2">Email Pemesan</label>
+                  <input 
+                    type="email" 
+                    required 
+                    value={buyerEmail}
+                    onChange={(e) => setBuyerEmail(e.target.value)}
+                    className="w-full bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl px-4 py-3 focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-all" 
+                    placeholder="Masukkan email Anda"
+                  />
+                  <p className="text-[10px] text-gray-400 mt-2">Gunakan email ini pada fitur <strong>Cek Status Booking</strong> untuk melacak pesanan.</p>
+                </div>
+                <button 
+                  type="submit" 
+                  disabled={isBuying || buySuccess}
+                  className="w-full bg-black text-white font-bold py-4 rounded-xl hover:bg-zinc-800 transition-all flex justify-center items-center gap-2 disabled:bg-gray-200 disabled:text-gray-500"
+                >
+                  {isBuying ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : 
+                   buySuccess ? <FaCheckCircle className="text-emerald-500" /> : <FaShoppingCart />}
+                  {isBuying ? 'Memproses...' : buySuccess ? 'Berhasil Dipesan!' : 'Beli Sekarang'}
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+      
     </div>
   );
 }

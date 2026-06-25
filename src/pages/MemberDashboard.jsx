@@ -7,10 +7,14 @@ import {
   FaCamera, FaSave, FaEnvelope, FaPhone, FaLock, FaCopy, FaChevronRight, FaArrowRight,
   FaTimes, FaBarcode, FaQrcode
 } from 'react-icons/fa';
+import { supabase } from '../lib/supabaseClient';
 
 export default function MemberDashboard() {
   const navigate = useNavigate();
   const [currentView, setCurrentView] = useState('hub');
+  
+  const [userName, setUserName] = useState('');
+  const [userEmail, setUserEmail] = useState('');
   
   // State interaktif
   const [copiedVoucher, setCopiedVoucher] = useState(null);
@@ -50,21 +54,78 @@ export default function MemberDashboard() {
   };
 
   // ==========================================
-  // DATA DUMMY
+  // DATA FETCHING DARI SUPABASE
   // ==========================================
-  const jadwalAktif = [
-    { id: 'HC-88912', service: 'Premium Haircut & Wash', kapster: 'Andi Saputra', date: '24 Okt 2026', time: '14:00', status: 'Terkonfirmasi', price: 'Rp 75.000' }
-  ];
+  const [jadwalAktif, setJadwalAktif] = useState([]);
+  const [riwayatBooking, setRiwayatBooking] = useState([]);
+  const [pesananProduk, setPesananProduk] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const riwayatBooking = [
-    { id: 'HC-77102', service: 'Classic Shave', kapster: 'Budi Hartono', date: '10 Sep 2026', time: '16:30', status: 'Selesai', price: 'Rp 35.000' },
-    { id: 'HC-65231', service: 'HairCut Signature', kapster: 'Andi Saputra', date: '15 Agu 2026', time: '11:00', status: 'Selesai', price: 'Rp 75.000' },
-  ];
+  useEffect(() => {
+    const email = localStorage.getItem('userEmail');
+    const name = localStorage.getItem('userName');
+    
+    if (!email) {
+      navigate('/login-member');
+      return;
+    }
+    
+    setUserName(name || 'Member');
+    setUserEmail(email);
 
-  const pesananProduk = [
-    { id: 'ORD-9921', date: '20 Okt 2026', items: 'Matte Clay Pomade (1x), Hair Tonic (1x)', total: 'Rp 205.000', status: 'Dikirim', resi: 'JNT1234567890' },
-    { id: 'ORD-8812', date: '05 Sep 2026', items: 'Beard Oil Premium (1x)', total: 'Rp 95.000', status: 'Selesai', resi: 'SICEPAT09876' }
-  ];
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        // Fetch Bookings
+        const { data: bookings, error: bookingsError } = await supabase
+          .from('haircut_bookings')
+          .select('*')
+          .eq('email', email)
+          .order('created_at', { ascending: false });
+
+        if (!bookingsError && bookings) {
+          const formattedBookings = bookings.map(b => {
+            let formattedDate = b.date;
+            if (b.tanggal) {
+              const parts = b.tanggal.split('-');
+              if (parts.length === 3) {
+                const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+                formattedDate = `${parseInt(parts[2], 10)} ${months[parseInt(parts[1], 10) - 1]}`;
+              }
+            }
+            return {
+              ...b,
+              date: formattedDate || '15 Okt',
+              time: b.waktu ? b.waktu.substring(0, 5) : b.time || '10:00',
+              price: b.harga ? `Rp ${b.harga.toLocaleString('id-ID')}` : (b.price || 'Rp 75.000')
+            };
+          });
+
+          const aktif = formattedBookings.filter(b => b.status === 'Menunggu Konfirmasi' || b.status === 'Terkonfirmasi');
+          const riwayat = formattedBookings.filter(b => b.status === 'Selesai' || b.status === 'Batal');
+          setJadwalAktif(aktif);
+          setRiwayatBooking(riwayat);
+        }
+
+        // Fetch Orders
+        const { data: orders, error: ordersError } = await supabase
+          .from('product_orders')
+          .select('*')
+          .eq('email', email)
+          .order('created_at', { ascending: false });
+
+        if (!ordersError && orders) {
+          setPesananProduk(orders);
+        }
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [navigate]);
 
   const voucherSaya = [
     { code: 'WELCOME20', title: 'First Haircut', discount: '20%', validUntil: '31 Des 2026', status: 'Aktif' },
@@ -219,7 +280,7 @@ export default function MemberDashboard() {
           <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Member Dashboard
         </div>
         <h1 className="text-4xl md:text-6xl font-black tracking-tighter text-slate-800 pb-2">
-          Halo, Rafif! <span className="inline-block origin-bottom-right animate-[wave_2s_infinite] text-black">👋</span>
+          Halo, {userName.split(' ')[0]}! <span className="inline-block origin-bottom-right animate-[wave_2s_infinite] text-black">👋</span>
         </h1>
         <p className="text-slate-500 mt-2 text-lg max-w-xl font-medium">Selamat datang. Mari tingkatkan penampilan Anda hari ini.</p>
       </div>
@@ -383,17 +444,17 @@ export default function MemberDashboard() {
               {riwayatBooking.map((item) => (
                 <tr key={item.id} className="border-b border-slate-50 hover:bg-slate-50/80 transition-colors group">
                   <td className="p-6">
-                    <p className="font-bold text-slate-800 group-hover:text-blue-600 transition-colors">{item.date}</p>
-                    <p className="text-xs text-slate-400 mt-1 font-medium">{item.time} WIB</p>
+                    <p className="font-bold text-slate-800 group-hover:text-blue-600 transition-colors">{item.tanggal || item.date}</p>
+                    <p className="text-xs text-slate-400 mt-1 font-medium">{item.waktu || item.time} WIB</p>
                   </td>
-                  <td className="p-6 font-bold text-slate-800">{item.service}</td>
+                  <td className="p-6 font-bold text-slate-800">{item.layanan || item.service}</td>
                   <td className="p-6 text-slate-600 font-medium flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center text-[10px] font-bold">{item.kapster.charAt(0)}</div>
+                    <div className="w-6 h-6 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center text-[10px] font-bold">{(item.kapster||'A').charAt(0)}</div>
                     {item.kapster}
                   </td>
                   <td className="p-6 text-right">
-                    <p className="font-black text-slate-800">{item.price}</p>
-                    <span className="inline-block mt-1.5 bg-slate-100 text-slate-500 px-2.5 py-1 rounded-md text-[9px] font-bold uppercase tracking-widest border border-slate-200">Selesai</span>
+                    <p className="font-black text-slate-800">Rp {item.harga || item.price}</p>
+                    <span className="inline-block mt-1.5 bg-slate-100 text-slate-500 px-2.5 py-1 rounded-md text-[9px] font-bold uppercase tracking-widest border border-slate-200">{item.status}</span>
                   </td>
                 </tr>
               ))}
@@ -425,8 +486,8 @@ export default function MemberDashboard() {
                   {order.status === 'Dikirim' ? <FaTruck className="group-hover:-translate-x-1 transition-transform" /> : <FaCheckCircle />}
                 </div>
                 <div>
-                  <h4 className="font-black text-slate-800 text-lg leading-tight group-hover:text-amber-600 transition-colors">{order.id}</h4>
-                  <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">{order.date}</p>
+                  <h4 className="font-black text-slate-800 text-lg leading-tight group-hover:text-amber-600 transition-colors">{order.id.substring(0,8)}</h4>
+                  <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">{new Date(order.created_at || order.date || new Date()).toLocaleDateString('id-ID')}</p>
                 </div>
               </div>
               <span className={`px-3 py-1.5 text-[9px] font-bold rounded-md uppercase tracking-widest border ${
@@ -445,7 +506,7 @@ export default function MemberDashboard() {
               </div>
               <div className="text-left md:text-right w-full md:w-auto">
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Belanja</p>
-                <p className="text-2xl font-black text-slate-800">{order.total}</p>
+                <p className="text-2xl font-black text-slate-800">Rp {order.total_harga || order.total}</p>
                 {order.status === 'Dikirim' && (
                   <button onClick={() => { setSelectedOrder(order); setShowTrackingModal(true); }} className="mt-4 w-full md:w-auto px-6 py-3 bg-amber-500 text-white text-xs font-bold rounded-xl hover:bg-amber-600 hover:-translate-y-1 active:scale-95 transition-all shadow-[0_5px_15px_rgba(245,158,11,0.3)] flex items-center justify-center gap-2">
                     Lacak Pengiriman <FaArrowRight />

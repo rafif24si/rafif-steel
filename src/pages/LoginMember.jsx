@@ -12,24 +12,41 @@ export default function LoginMember() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  const [loginError, setLoginError] = useState('');
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+    setLoginError('');
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setLoginError('');
     
-    setTimeout(() => {
+    try {
+      // Import secara dinamis agar tidak mengubah struktur import yang ada jika tidak perlu
+      const { usersAPI } = await import('../services/usersAPI');
+      const users = await usersAPI.loginUser(formData.email, formData.password);
+      
+      if (users && users.length > 0) {
+        const loggedInUser = users[0];
+        // Simpan data login
+        localStorage.setItem('userEmail', loggedInUser.email);
+        localStorage.setItem('userName', loggedInUser.nama || loggedInUser.username || loggedInUser.email);
+        
+        // LOGIKA REDIRECT PINTAR
+        const redirectTo = location.state?.from || '/member-dashboard';
+        navigate(redirectTo);
+      } else {
+        setLoginError('Email atau password salah.');
+        setIsSubmitting(false);
+      }
+    } catch (error) {
+      console.error("Login failed", error);
+      setLoginError('Terjadi kesalahan saat mencoba login.');
       setIsSubmitting(false);
-      
-      // LOGIKA REDIRECT PINTAR:
-      // Cek apakah ada data 'from' di state (dikirim dari tombol booking)
-      // Jika ada, arahkan ke halaman tersebut. Jika tidak, ke dashboard.
-      const redirectTo = location.state?.from || '/member-dashboard';
-      navigate(redirectTo);
-      
-    }, 1500);
+    }
   };
 
   return (
@@ -127,6 +144,11 @@ export default function LoginMember() {
             </div>
 
             {/* Submit */}
+            {loginError && (
+              <div className="p-3 bg-red-50 text-red-600 border border-red-100 rounded-xl text-sm font-medium mb-4">
+                {loginError}
+              </div>
+            )}
             <button 
               type="submit" disabled={isSubmitting}
               className="w-full bg-gray-900 text-white rounded-2xl py-4 hover:bg-black transition-all duration-300 disabled:opacity-60 disabled:cursor-wait font-semibold text-sm shadow-lg shadow-gray-900/10 hover:shadow-xl hover:shadow-gray-900/20 hover:-translate-y-0.5 mt-2"

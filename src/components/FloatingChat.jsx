@@ -7,7 +7,7 @@ const AI_LOGO_URL = "https://i.ibb.co.com/TxSKgNWK/Logo-SAHAJA-AI.png";
 
 export default function FloatingChat() {
   const [isOpen, setIsOpen] = useState(false);
-  const [isAtTop, setIsAtTop] = useState(true); // State untuk mendeteksi posisi Hero Section
+  const [isWhiteTheme, setIsWhiteTheme] = useState(true); // State untuk warna tema tombol (putih jika di hero atau dark section)
   const [messages, setMessages] = useState([
     { 
       role: "assistant", 
@@ -26,15 +26,35 @@ export default function FloatingChat() {
     scrollToBottom();
   }, [messages]);
 
-  // Efek untuk mendeteksi Scroll (Apakah sedang di Hero Section atau bukan)
+  // Efek untuk mendeteksi Scroll (Apakah di Hero, Promo, atau Footer)
   useEffect(() => {
     const handleScroll = () => {
-      // Mengubah warna ketika di-scroll lewat dari setengah layar (keluar dari Hero Section)
+      // 1. Cek apakah di atas layar (Hero Section)
       if (window.scrollY < window.innerHeight * 0.5) {
-        setIsAtTop(true);
-      } else {
-        setIsAtTop(false);
+        setIsWhiteTheme(true);
+        return;
       }
+      
+      // 2. Cek apakah posisi tombol (di kiri bawah) berada di atas section gelap
+      const darkSections = ['vouchers', 'footer'];
+      let isOverDark = false;
+      
+      // Estimasi posisi Y tombol chat (kira-kira 50px dari tepi bawah layar)
+      const buttonY = window.innerHeight - 50; 
+      
+      for (const id of darkSections) {
+        const el = id === 'footer' ? document.querySelector('footer') : document.getElementById(id);
+        if (el) {
+          const rect = el.getBoundingClientRect();
+          // Jika posisi Y tombol berada di dalam area elemen ini
+          if (rect.top <= buttonY && rect.bottom >= buttonY) {
+            isOverDark = true;
+            break;
+          }
+        }
+      }
+
+      setIsWhiteTheme(isOverDark);
     };
     
     window.addEventListener("scroll", handleScroll, { passive: true });
@@ -179,7 +199,7 @@ export default function FloatingChat() {
         className={`${
           isOpen ? "scale-0 opacity-0" : "scale-100 opacity-100"
         } absolute bottom-0 left-0 w-14 h-14 rounded-full flex items-center justify-center shadow-2xl hover:scale-110 transition-all duration-500 z-50 ${
-          isAtTop 
+          isWhiteTheme 
             ? "bg-white text-black hover:bg-zinc-200" 
             : "bg-[#09090b] text-white hover:bg-zinc-800 border border-zinc-800"
         }`}

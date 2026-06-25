@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   FaArrowLeft, FaCut, FaUserTie, FaCalendarCheck, 
   FaClock, FaCheckCircle, FaSpinner, FaChevronRight, FaStar, FaSpa, FaMagic, FaLeaf, FaWater 
 } from 'react-icons/fa';
+import { supabase } from '../lib/supabaseClient';
 
 export default function Booking() {
   const navigate = useNavigate();
@@ -18,6 +19,14 @@ export default function Booking() {
     time: null,
     price: 0
   });
+
+  // PROTEKSI ROUTE
+  useEffect(() => {
+    const userEmail = localStorage.getItem('userEmail');
+    if (!userEmail) {
+      navigate('/login-member', { state: { from: '/booking' } });
+    }
+  }, [navigate]);
 
   // DATA DUMMY LAYANAN - 9 ITEM
   const services = [
@@ -81,12 +90,33 @@ export default function Booking() {
     setBookingData({ ...bookingData, date: e.target.value, time: null });
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setIsSubmitting(true);
-    setTimeout(() => {
+    
+    try {
+      const userEmail = localStorage.getItem('userEmail');
+      
+      const { error } = await supabase
+        .from('haircut_bookings')
+        .insert([{
+          email: userEmail,
+          layanan: bookingData.service,
+          kapster: bookingData.kapster,
+          tanggal: bookingData.date,
+          waktu: bookingData.time,
+          harga: bookingData.price.toString(), // konversi ke text jika kolom di DB adalah text
+          status: 'Menunggu Konfirmasi'
+        }]);
+
+      if (error) throw error;
+      
       setIsSubmitting(false);
       setIsSuccess(true);
-    }, 2000); 
+    } catch (error) {
+      console.error("Gagal melakukan booking", error);
+      alert(`Terjadi kesalahan: ${error.message || error.details || 'Gagal memproses booking'}. Jika masalah berlanjut, periksa pengaturan RLS di Supabase Anda.`);
+      setIsSubmitting(false);
+    }
   };
 
   // ==========================================
