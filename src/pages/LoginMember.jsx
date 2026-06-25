@@ -164,7 +164,7 @@ export default function LoginMember() {
           {/* Footer */}
           <p className="mt-8 text-center text-gray-500 text-sm">
             Don't have an account?{' '}
-            <Link to="/register" className="text-gray-900 font-semibold hover:underline underline-offset-4">
+            <Link to="/register-member" className="text-gray-900 font-semibold hover:underline underline-offset-4">
               Create account
             </Link>
           </p>

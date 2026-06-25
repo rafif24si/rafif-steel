@@ -258,10 +258,14 @@ const ProductCard = ({ product, index, onBuy }) => {
             
             <div className="absolute inset-x-4 bottom-4 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
               <button 
-                onClick={(e) => { e.preventDefault(); onBuy(product); }}
-                className="w-full bg-white/95 backdrop-blur-sm text-black py-3 rounded-xl font-bold text-xs hover:bg-black hover:text-white transition-all duration-200 shadow-xl flex items-center justify-center gap-2"
+                onClick={(e) => { 
+                  e.preventDefault(); 
+                  if (product.stok > 0) onBuy(product); 
+                }}
+                disabled={product.stok <= 0}
+                className={`w-full bg-white/95 backdrop-blur-sm text-black py-3 rounded-xl font-bold text-xs hover:bg-black hover:text-white transition-all duration-200 shadow-xl flex items-center justify-center gap-2 ${product.stok <= 0 ? 'opacity-50 cursor-not-allowed hover:bg-white/95 hover:text-black' : ''}`}
               >
-                <FaShoppingCart className="text-sm" /> Beli Sekarang
+                <FaShoppingCart className="text-sm" /> {product.stok > 0 ? 'Beli Sekarang' : 'Stok Habis'}
               </button>
             </div>
           </div>
@@ -299,10 +303,19 @@ const ProductCard = ({ product, index, onBuy }) => {
                   </p>
                 )}
               </div>
+              <div className="flex flex-col items-end">
+                <span className={`text-[10px] font-bold px-2 py-1 rounded-md ${product.stok > 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600'}`}>
+                  Sisa Stok: {product.stok || 0}
+                </span>
+              </div>
               
               <button 
-                onClick={(e) => { e.preventDefault(); onBuy(product); }}
-                className="w-10 h-10 rounded-xl bg-gray-900 text-white flex items-center justify-center hover:bg-black transition-all duration-200 hover:scale-110 hover:shadow-lg opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0"
+                onClick={(e) => { 
+                  e.preventDefault(); 
+                  if (product.stok > 0) onBuy(product); 
+                }}
+                disabled={product.stok <= 0}
+                className={`w-10 h-10 rounded-xl text-white flex items-center justify-center transition-all duration-200 opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 ${product.stok <= 0 ? 'bg-gray-400 cursor-not-allowed' : 'bg-gray-900 hover:bg-black hover:scale-110 hover:shadow-lg'}`}
               >
                 <FaShoppingCart className="text-sm" />
               </button>
@@ -323,6 +336,7 @@ export default function LandingPage() {
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [isBackToTopWhite, setIsBackToTopWhite] = useState(false);
   const [selectedService, setSelectedService] = useState(null);
+  const [selectedKapster, setSelectedKapster] = useState(null);
   
   // State untuk form Booking & Cek Status (Repurposed from Contact)
   const [bookingNama, setBookingNama] = useState('');
@@ -338,8 +352,13 @@ export default function LandingPage() {
   // State untuk Checkout Produk
   const [buyingProduct, setBuyingProduct] = useState(null);
   const [buyerEmail, setBuyerEmail] = useState('');
+  const [buyQuantity, setBuyQuantity] = useState(1);
   const [isBuying, setIsBuying] = useState(false);
   const [buySuccess, setBuySuccess] = useState(false);
+  const [buyStep, setBuyStep] = useState(1);
+  const [productPromoInput, setProductPromoInput] = useState('');
+  const [productPromoError, setProductPromoError] = useState('');
+  const [isProductPromoLoading, setIsProductPromoLoading] = useState(false);
 
   // State untuk Auth & Testimoni
   const [userSession, setUserSession] = useState(null);
@@ -347,6 +366,37 @@ export default function LandingPage() {
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [reviewForm, setReviewForm] = useState({ id: null, rating: 5, review: '' });
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+
+  // State untuk Dynamic Data
+  const [dynamicServices, setDynamicServices] = useState([]);
+  const [dynamicProducts, setDynamicProducts] = useState([]);
+  const [dynamicPromos, setDynamicPromos] = useState([]);
+  const [dynamicKapsters, setDynamicKapsters] = useState([]);
+  const [isLoadingDynamic, setIsLoadingDynamic] = useState(true);
+
+  useEffect(() => {
+    const fetchDynamicData = async () => {
+      setIsLoadingDynamic(true);
+      try {
+        const [svcRes, prdRes, proRes, kapRes] = await Promise.all([
+          supabase.from('services').select('*').order('created_at', { ascending: false }).limit(8),
+          supabase.from('products').select('*').order('created_at', { ascending: false }).limit(8),
+          supabase.from('promos').select('*').eq('status', 'Aktif').not('code', 'ilike', 'RWD-%').order('created_at', { ascending: false }),
+          supabase.from('kapsters').select('*')
+        ]);
+        
+        if (svcRes.data) setDynamicServices(svcRes.data);
+        if (prdRes.data) setDynamicProducts(prdRes.data);
+        if (proRes.data) setDynamicPromos(proRes.data);
+        if (kapRes.data) setDynamicKapsters(kapRes.data);
+      } catch (e) {
+        console.error("Error fetching dynamic data:", e);
+      } finally {
+        setIsLoadingDynamic(false);
+      }
+    };
+    fetchDynamicData();
+  }, []);
 
   useEffect(() => {
     const fetchReviews = async () => {
@@ -411,6 +461,94 @@ export default function LandingPage() {
     return () => clearInterval(interval);
   }, []);
 
+  const handlePromoClaim = (promo) => {
+    // cek apakah ini promo produk
+    if (promo.description && promo.description.toLowerCase().includes('produk')) {
+      // Cari produk yang cocok
+      let matchedProduct = null;
+      for (const prod of dynamicProducts) {
+        if (promo.description.toLowerCase().includes(prod.name.toLowerCase())) {
+          matchedProduct = prod;
+          break;
+        }
+      }
+      if (!matchedProduct && dynamicProducts.length > 0) {
+        matchedProduct = dynamicProducts[0]; // fallback
+      }
+
+      if (matchedProduct) {
+        let originalPrice = matchedProduct.price;
+        if (typeof originalPrice === 'string') {
+          originalPrice = parseInt(originalPrice.replace(/\D/g, ''));
+        }
+        
+        let discountVal = 0;
+        if (promo.discount.includes('%')) {
+          discountVal = (originalPrice * parseInt(promo.discount)) / 100;
+        } else if (promo.discount.toLowerCase().includes('rp')) {
+          discountVal = parseInt(promo.discount.replace(/\D/g, ''));
+        }
+
+        // Tampilkan modal produk dengan diskon khusus promo
+        setBuyingProduct({
+          ...matchedProduct,
+          price: `Rp ${originalPrice.toLocaleString('id-ID')}`,
+          discount: null, // override original discount
+          promoCode: promo.code,
+          promoDiscountVal: discountVal,
+          finalPriceNum: Math.max(0, originalPrice - discountVal),
+          originalPriceNum: originalPrice
+        });
+      } else {
+        alert("Produk untuk promo ini tidak ditemukan.");
+      }
+    } else {
+      // Promo layanan, navigasi ke booking
+      navigate('/booking', { state: { promoCode: promo.code } });
+    }
+  };
+
+  const handleApplyProductPromo = async (e) => {
+    e.preventDefault();
+    if (!productPromoInput) return;
+    setIsProductPromoLoading(true);
+    setProductPromoError('');
+    
+    try {
+      const { data, error } = await supabase
+        .from('promos')
+        .select('*')
+        .eq('code', productPromoInput.toUpperCase())
+        .single();
+        
+      if (error || !data) throw new Error('Kode voucher tidak valid.');
+      if (data.status !== 'Aktif' && data.status !== 'Active') throw new Error('Kode voucher sudah tidak aktif.');
+      
+      const originalPrice = buyingProduct.discount 
+        ? parseInt(buyingProduct.price.replace(/\D/g, '')) * (1 - buyingProduct.discount / 100) 
+        : parseInt(buyingProduct.price.replace(/\D/g, ''));
+        
+      let discountAmount = 0;
+      if (data.discount.includes('%')) {
+        discountAmount = (originalPrice * parseInt(data.discount)) / 100;
+      } else if (data.discount.toLowerCase().includes('rp')) {
+        discountAmount = parseInt(data.discount.replace(/\D/g, ''));
+      }
+      
+      setBuyingProduct(prev => ({
+        ...prev,
+        promoCode: data.code,
+        promoDiscountVal: discountAmount,
+        finalPriceNum: Math.max(0, originalPrice - discountAmount),
+        originalPriceNum: originalPrice
+      }));
+    } catch (err) {
+      setProductPromoError(err.message);
+    } finally {
+      setIsProductPromoLoading(false);
+    }
+  };
+
   const handleBuyProduct = async (e) => {
     e.preventDefault();
     if (!buyerEmail || !buyingProduct) return;
@@ -418,18 +556,42 @@ export default function LandingPage() {
     
     try {
       const originalPrice = parseInt(buyingProduct.price.replace(/\D/g, ''));
-      const finalPrice = buyingProduct.discount ? originalPrice * (1 - buyingProduct.discount / 100) : originalPrice;
+      let finalPrice = originalPrice;
+      if (buyingProduct.promoCode) {
+        finalPrice = buyingProduct.finalPriceNum;
+      } else if (buyingProduct.discount) {
+        finalPrice = originalPrice * (1 - buyingProduct.discount / 100);
+      }
+      
+      const qty = parseInt(buyQuantity) || 1;
+      const totalFinalPrice = finalPrice * qty;
       
       const { error } = await supabase
         .from('product_orders')
         .insert([{
           email: buyerEmail,
-          items: buyingProduct.name + ' (1x)',
-          total_harga: finalPrice,
+          items: buyingProduct.name + ` (${qty}x)`,
+          total_harga: totalFinalPrice,
           status: 'Diproses'
         }]);
         
       if (error) throw error;
+      
+      if (buyingProduct.id) {
+        const { data: pData } = await supabase.from('products').select('stok').eq('id', buyingProduct.id).single();
+        const currentStok = pData ? pData.stok : 0;
+        if (currentStok >= qty) {
+          await supabase.from('products').update({ stok: currentStok - qty }).eq('id', buyingProduct.id);
+          
+          setDynamicProducts(prev => prev.map(p => 
+            p.id === buyingProduct.id ? { ...p, stok: currentStok - qty } : p
+          ));
+        }
+      }
+
+      if (buyingProduct.promoCode) {
+        await supabase.from('promos').update({ status: 'Terpakai' }).eq('code', buyingProduct.promoCode);
+      }
       
       setBuySuccess(true);
       setTimeout(() => {
@@ -446,9 +608,29 @@ export default function LandingPage() {
 
   const handleCekStatus = async (e) => {
     e.preventDefault();
+    if (!userSession) {
+      alert('Silakan login sebagai member terlebih dahulu untuk mengecek status pesanan.');
+      navigate('/login-member');
+      return;
+    }
     if (!bookingWa) {
       setCekStatusError('Masukkan Email terlebih dahulu.');
       setTimeout(() => setCekStatusError(''), 3000);
+      return;
+    }
+    
+    // Validasi email di database
+    try {
+      const emailInput = bookingWa.toLowerCase().trim();
+      const { data: userExists } = await supabase.from('users').select('id').eq('email', emailInput).single();
+      if (!userExists) {
+        alert("Email tidak terdata");
+        navigate('/register-member');
+        return;
+      }
+    } catch (err) {
+      alert("Email tidak terdata");
+      navigate('/register-member');
       return;
     }
     
@@ -546,6 +728,7 @@ export default function LandingPage() {
     { href: "#styles", label: "Style" },
     { href: "#products", label: "Produk" },
     { href: "#vouchers", label: "Promo" },
+    { href: "#kapsters", label: "Kapster" },
     { href: "#contact", label: "Status" },
     { href: "#reviews", label: "Ulasan" }
   ];
@@ -619,7 +802,7 @@ export default function LandingPage() {
         <nav 
           className={`flex items-center justify-between transition-all duration-[800ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${
             isScrolled 
-              ? 'w-[95%] max-w-5xl mt-4 md:mt-6 bg-white/90 backdrop-blur-xl border border-gray-200 shadow-[0_8px_30px_rgba(0,0,0,0.08)] rounded-full px-4 md:px-6 py-2.5 md:py-3' 
+              ? 'w-[98%] max-w-7xl mt-4 md:mt-6 bg-white/90 backdrop-blur-xl border border-gray-200 shadow-[0_8px_30px_rgba(0,0,0,0.08)] rounded-full px-6 md:px-8 py-3' 
               : 'w-full mt-0 bg-gradient-to-b from-[#0A0F1A]/90 to-transparent border-b border-transparent px-6 md:px-12 py-5 md:py-8 rounded-none'
           }`}
         >
@@ -639,7 +822,7 @@ export default function LandingPage() {
             </span>
           </Link>
           
-          <div className={`hidden lg:flex items-center gap-6 text-[11px] font-bold tracking-[0.1em] uppercase transition-colors duration-500 ${
+          <div className={`hidden lg:flex items-center gap-7 text-[11px] font-bold tracking-[0.1em] uppercase transition-colors duration-500 ${
             isScrolled ? 'text-gray-600' : 'text-gray-300'
           }`}>
             {menuLinks.map((item) => (
@@ -769,7 +952,7 @@ export default function LandingPage() {
           <FadeInSection delay={400}>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 w-full px-4 sm:px-0">
               <Link 
-                to="/login-member" 
+                to={userSession ? "/booking" : "/login-member"} 
                 state={{ from: '/booking' }}
                 className="group w-full sm:w-auto px-10 py-4 font-bold text-black bg-white rounded-full transition-all duration-500 hover:bg-gray-200 hover:-translate-y-1 flex items-center justify-center gap-3 shadow-[0_0_30px_rgba(255,255,255,0.2)]"
               >
@@ -875,37 +1058,49 @@ export default function LandingPage() {
           </FadeInSection>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
-            {[
-              { icon: FaCut, title: "HairCut Signature", desc: "Potongan rambut presisi dengan pencucian, pijat kepala ringan, dan styling premium.", price: "Rp 75.000", duration: "45 Min", badge: "Popular", featured: true },
-              { icon: FaUserTie, title: "Classic Shave", desc: "Cukur kumis dan jenggot tradisional menggunakan handuk hangat dan krim khusus.", price: "Rp 35.000", duration: "20 Min", badge: "Classic", featured: false },
-              { icon: FaRegCalendarCheck, title: "Hair Coloring", desc: "Pewarnaan rambut profesional. Pilihan warna natural hingga warna fashion kekinian.", price: "Rp 150.000", duration: "60 Min", badge: "Premium", featured: false },
-              { icon: FaSmile, title: "Gentleman Facial", desc: "Perawatan kulit wajah khusus pria untuk membersihkan komedo dan menyegarkan kulit.", price: "Rp 50.000", duration: "30 Min", badge: "Relax", featured: false }
-            ].map((service, idx) => (
-              <FadeInSection delay={idx * 80} key={idx} direction="scale" duration={600}>
-                <TiltCard maxTilt={6} className="h-full">
-                  <div className={`relative p-6 md:p-8 rounded-3xl md:rounded-[2.5rem] transition-all duration-300 group cursor-pointer h-full flex flex-col ${service.featured ? 'bg-gray-900 shadow-xl border border-gray-800' : 'bg-white shadow-md hover:shadow-xl border border-gray-200'}`}>
-                    <div className={`absolute top-0 right-0 text-[10px] md:text-xs font-black px-4 md:px-5 py-1.5 md:py-2 rounded-bl-2xl shadow-sm ${service.featured ? 'bg-white text-black' : 'bg-gray-100 text-gray-700'}`}>
-                      {service.badge}
+            {isLoadingDynamic ? (
+              <div className="col-span-full text-center py-10 font-bold text-slate-500">Loading Services...</div>
+            ) : dynamicServices.map((service, idx) => {
+              const isFeatured = idx === 0; // Highlight the first one
+              const categoryLabels = ['Premium', 'Signature', 'Classic', 'Exclusive', 'Express', 'Special'];
+              const displayCategory = categoryLabels[idx % categoryLabels.length];
+              
+              return (
+                <FadeInSection delay={idx * 80} key={idx} direction="scale" duration={600}>
+                  <TiltCard maxTilt={6} className="h-full">
+                    <div className={`relative p-6 md:p-8 rounded-3xl md:rounded-[2.5rem] transition-all duration-300 group cursor-pointer h-full flex flex-col ${isFeatured ? 'bg-gray-900 shadow-xl border border-gray-800' : 'bg-white shadow-md hover:shadow-xl border border-gray-200'}`}>
+                      <div className={`absolute top-0 right-0 text-[10px] md:text-xs font-black px-4 md:px-5 py-1.5 md:py-2 rounded-bl-2xl shadow-sm ${isFeatured ? 'bg-white text-black' : 'bg-gray-100 text-gray-700'}`}>
+                        {displayCategory}
+                      </div>
+                      <div className={`w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center mb-5 md:mb-6 transition-all duration-300 group-hover:scale-110 group-hover:rotate-6 ${isFeatured ? 'bg-white/10' : 'bg-gray-100'}`}>
+                        <FaCut className={`text-xl md:text-2xl ${isFeatured ? 'text-white' : 'text-gray-800'}`} />
+                      </div>
+                      <h3 className={`text-xl font-bold mb-3 ${isFeatured ? 'text-white' : 'text-gray-900'}`}>{service.name}</h3>
+                      
+                      <div className="flex items-center gap-2 text-xs text-gray-400 mb-5 flex-grow"><FaClock /><span>{service.duration || '30 Min'}</span></div>
+                      
+                      <div className={`pt-4 border-t mt-auto flex flex-col gap-4 ${isFeatured ? 'border-gray-800' : 'border-gray-100'}`}>
+                        <span className={`font-black text-2xl ${isFeatured ? 'text-white' : 'text-gray-900'}`}>Rp {service.price?.toLocaleString('id-ID')}</span>
+                        <button 
+                          onClick={(e) => { 
+                            e.stopPropagation(); 
+                            setSelectedService({
+                                title: service.name,
+                                desc: service.description,
+                                duration: service.duration,
+                                price: `Rp ${service.price?.toLocaleString('id-ID')}`
+                            }); 
+                          }} 
+                          className={`w-full py-3 text-sm font-bold rounded-xl transition-all duration-300 hover:scale-[1.02] shadow-md flex items-center justify-center gap-2 ${isFeatured ? 'bg-white text-black hover:bg-gray-200' : 'bg-gray-900 text-white hover:bg-black'}`}
+                        >
+                          Lihat Detail
+                        </button>
+                      </div>
                     </div>
-                    <div className={`w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center mb-5 md:mb-6 transition-all duration-300 group-hover:scale-110 group-hover:rotate-6 ${service.featured ? 'bg-white/10' : 'bg-gray-100'}`}>
-                      <service.icon className={`text-xl md:text-2xl ${service.featured ? 'text-white' : 'text-gray-800'}`} />
-                    </div>
-                    <h3 className={`text-xl font-bold mb-3 ${service.featured ? 'text-white' : 'text-gray-900'}`}>{service.title}</h3>
-                    <p className={`text-sm leading-relaxed mb-4 flex-grow ${service.featured ? 'text-gray-400' : 'text-gray-500'}`}>{service.desc}</p>
-                    <div className="flex items-center gap-2 text-xs text-gray-400 mb-5"><FaClock /><span>{service.duration}</span></div>
-                    <div className={`pt-4 border-t mt-auto flex flex-col gap-4 ${service.featured ? 'border-gray-800' : 'border-gray-100'}`}>
-                      <span className={`font-black text-2xl ${service.featured ? 'text-white' : 'text-gray-900'}`}>{service.price}</span>
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); setSelectedService(service); }} 
-                        className={`w-full py-3 text-sm font-bold rounded-xl transition-all duration-300 hover:scale-[1.02] shadow-md flex items-center justify-center gap-2 ${service.featured ? 'bg-white text-black hover:bg-gray-200' : 'bg-gray-900 text-white hover:bg-black'}`}
-                      >
-                        Lihat Detail
-                      </button>
-                    </div>
-                  </div>
-                </TiltCard>
-              </FadeInSection>
-            ))}
+                  </TiltCard>
+                </FadeInSection>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -939,8 +1134,68 @@ export default function LandingPage() {
           </div>
           
           <div className="mt-8 flex gap-3">
-            <Link to="/booking" className="flex-1 bg-white text-black font-bold py-3.5 rounded-xl hover:bg-gray-200 transition-colors flex items-center justify-center gap-2">
+            <Link 
+              to="/booking" 
+              state={{ preSelectedService: selectedService }}
+              onClick={(e) => {
+                if (!userSession) {
+                  e.preventDefault();
+                  alert('Silakan login sebagai member terlebih dahulu untuk memesan layanan.');
+                  navigate('/login-member');
+                }
+              }}
+              className="flex-1 bg-white text-black font-bold py-3.5 rounded-xl hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
+            >
               Booking Sekarang <FaArrowRight className="text-xs" />
+            </Link>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* MODAL KAPSTER */}
+      <Dialog open={!!selectedKapster} onOpenChange={(open) => !open && setSelectedKapster(null)}>
+        <DialogContent className="bg-gray-900 text-white border-gray-800 sm:max-w-md rounded-2xl sm:rounded-3xl p-6 sm:p-8">
+          <DialogHeader>
+            <div className="flex items-center gap-4 mb-4 text-left">
+              <img src={selectedKapster?.img_url || 'https://i.pravatar.cc/150'} alt={selectedKapster?.name} className="w-20 h-20 rounded-full object-cover border-2 border-gray-700" />
+              <div>
+                <DialogTitle className="text-2xl font-black">{selectedKapster?.name}</DialogTitle>
+                <div className="text-emerald-400 text-sm font-bold mt-1">{selectedKapster?.specialty || 'Senior Barber'}</div>
+              </div>
+            </div>
+            <DialogDescription className="text-gray-400 text-sm leading-relaxed text-left">
+              {selectedKapster?.description || 'Profesional berpengalaman yang siap memberikan pelayanan maksimal untuk penampilan terbaik Anda.'}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="flex flex-col gap-3 mt-4 text-left">
+            <div className="flex justify-between items-center bg-gray-800/50 p-3 rounded-xl border border-gray-700">
+              <span className="text-gray-400 text-sm">Pengalaman</span>
+              <span className="font-bold">{selectedKapster?.experience || '3 Tahun'}</span>
+            </div>
+            <div className="flex justify-between items-center bg-gray-800/50 p-3 rounded-xl border border-gray-700">
+              <span className="text-gray-400 text-sm">Jadwal Shift</span>
+              <span className="font-bold text-right text-sm">{selectedKapster?.shift_days || 'Senin-Minggu'}<br/><span className="text-xs text-gray-500">{selectedKapster?.shift_hours || '10:00-20:00'}</span></span>
+            </div>
+            <div className="flex justify-between items-center bg-gray-800/50 p-3 rounded-xl border border-gray-700">
+              <span className="text-gray-400 text-sm">Tarif Mulai</span>
+              <span className="font-black text-lg text-emerald-400">Rp {selectedKapster?.base_price?.toLocaleString('id-ID') || '50.000'}</span>
+            </div>
+          </div>
+          
+          <div className="mt-6 flex gap-3">
+            <Link 
+              to="/booking" 
+              onClick={(e) => {
+                if (!userSession) {
+                  e.preventDefault();
+                  alert('Silakan login sebagai member terlebih dahulu untuk memesan layanan.');
+                  navigate('/login-member');
+                }
+              }}
+              className="flex w-full bg-white text-black font-bold py-3.5 rounded-xl hover:bg-gray-200 transition-colors items-center justify-center gap-2"
+            >
+              Booking {selectedKapster?.name?.split(' ')[0]} <FaArrowRight className="text-xs" />
             </Link>
           </div>
         </DialogContent>
@@ -1200,105 +1455,47 @@ export default function LandingPage() {
 
 
           <div className="w-full lg:w-1/2 flex flex-col gap-4 md:gap-5">
-
-
-
-            {[
-
-
-
-              { discount: "Diskon 20%", title: "First Haircut", desc: "*Berlaku untuk transaksi pertama", category: "New Member", code: "WELCOME20", color: "yellow", borderColor: "border-yellow-400", dotColor: "bg-yellow-400" },
-
-
-
-              { discount: "Potongan 15k", title: "Pomade", desc: "*Berlaku semua varian", category: "Product Promo", code: "POMADE15", color: "emerald", borderColor: "border-emerald-400", dotColor: "bg-emerald-400" }
-
-
-
-            ].map((promo, idx) => (
-
-
-
-              <FadeInSection delay={idx * 150} direction="right" key={idx} duration={500}>
-
-
-
-                <TiltCard maxTilt={3}>
-
-
-
-                  <div className={`bg-white rounded-2xl md:rounded-3xl p-5 md:p-7 flex items-center justify-between border-l-[10px] md:border-l-[14px] ${promo.borderColor} shadow-xl relative overflow-hidden group hover:scale-[1.02] transition-transform duration-200 cursor-pointer`}>
-
-
-
-                    <div className={`absolute -left-[12px] md:-left-[16px] top-1/2 -translate-y-1/2 w-3 h-3 md:w-4 md:h-4 ${promo.dotColor} rounded-full animate-pulse`} />
-
-
-
-                    <div>
-
-
-
-                      <p className="text-[10px] md:text-xs font-black text-gray-500 uppercase tracking-widest mb-1">{promo.category}</p>
-
-
-
-                      <h4 className="text-xl sm:text-2xl md:text-3xl font-black text-gray-900 mb-1">{promo.discount} {promo.title}</h4>
-
-
-
-                      <p className="text-xs text-gray-500 mb-2">{promo.desc}</p>
-
-
-
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gray-100 rounded-full text-[10px]">
-
-
-
-                        <span className="text-gray-500">Kode:</span>
-
-
-
-                        <span className="font-bold text-black">{promo.code}</span>
-
-
-
-                      </span>
-
-
-
+            {isLoadingDynamic ? (
+              <div className="col-span-full text-center py-10 font-bold text-white">Loading Promos...</div>
+            ) : dynamicPromos.map((promo, idx) => {
+              const colors = [
+                { color: "yellow", borderColor: "border-yellow-400", dotColor: "bg-yellow-400" },
+                { color: "emerald", borderColor: "border-emerald-400", dotColor: "bg-emerald-400" },
+                { color: "blue", borderColor: "border-blue-400", dotColor: "bg-blue-400" },
+                { color: "purple", borderColor: "border-purple-400", dotColor: "bg-purple-400" },
+              ];
+              const style = colors[idx % colors.length];
+              
+              return (
+                <FadeInSection delay={idx * 150} direction="right" key={idx} duration={500}>
+                  <TiltCard maxTilt={3}>
+                    <div className={`bg-white rounded-2xl md:rounded-3xl p-5 md:p-7 flex items-center justify-between border-l-[10px] md:border-l-[14px] ${style.borderColor} shadow-xl relative overflow-hidden group hover:scale-[1.02] transition-transform duration-200 cursor-pointer`}>
+                      <div className={`absolute -left-[12px] md:-left-[16px] top-1/2 -translate-y-1/2 w-3 h-3 md:w-4 md:h-4 ${style.dotColor} rounded-full animate-pulse`} />
+                      <div className="flex flex-col gap-1 flex-1">
+                        <p className="text-[10px] md:text-xs font-black text-gray-500 uppercase tracking-widest mb-1">Promo Khusus</p>
+                        <h4 className="text-xl sm:text-2xl md:text-3xl font-black text-gray-900 mb-1">{promo.discount} {promo.title}</h4>
+                        <p className="text-xs text-gray-500 mb-2">{promo.description || '*Syarat dan ketentuan berlaku'}</p>
+                        <div className="flex items-center justify-between gap-3 mt-2">
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gray-100 rounded-full text-[10px]">
+                            <span className="text-gray-500">Kode:</span>
+                            <span className="font-bold text-black">{promo.code}</span>
+                          </span>
+                          <button 
+                            onClick={(e) => { e.preventDefault(); handlePromoClaim(promo); }}
+                            className={`px-3 py-1.5 text-xs font-bold rounded-lg text-white ${style.dotColor} hover:brightness-90 transition-all shadow-sm whitespace-nowrap`}
+                          >
+                            Klaim Voucher
+                          </button>
+                        </div>
+                      </div>
+                      <div className="text-4xl md:text-5xl opacity-20 group-hover:opacity-30 transition-opacity duration-200">
+                        {style.color === 'yellow' ? <FaTicketAlt className="text-yellow-500" /> : <FaShoppingBag className={`text-${style.color}-500`} />}
+                      </div>
                     </div>
-
-
-
-                    <div className="text-4xl md:text-5xl opacity-20 group-hover:opacity-30 transition-opacity duration-200">
-
-
-
-                      {promo.color === 'yellow' ? <FaTicketAlt className="text-yellow-500" /> : <FaShoppingBag className="text-emerald-500" />}
-
-
-
-                    </div>
-
-
-
-                  </div>
-
-
-
-                </TiltCard>
-
-
-
-              </FadeInSection>
-
-
-
-            ))}
-
-
-
+                  </TiltCard>
+                </FadeInSection>
+              );
+            })}
           </div>
 
 
@@ -1330,8 +1527,34 @@ export default function LandingPage() {
           </FadeInSection>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 md:gap-6 lg:gap-8">
-            {products.map((prod, idx) => (
-              <ProductCard key={idx} product={prod} index={idx} onBuy={setBuyingProduct} />
+            {isLoadingDynamic ? (
+              <div className="col-span-full text-center py-10 font-bold text-slate-500">Loading Products...</div>
+            ) : dynamicProducts.map((prod, idx) => (
+              <ProductCard 
+                key={idx} 
+                product={{
+                  ...prod,
+                  price: typeof prod.price === 'number' ? `Rp ${prod.price.toLocaleString('id-ID')}` : prod.price,
+                  img: prod.image_url || prod.img_url || prod.img || 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80',
+                  type: prod.category || prod.type || 'Treatment',
+                  rating: prod.rating || 4.8,
+                  reviews: prod.reviews || 120,
+                  sold: prod.sold || 350
+                }} 
+                index={idx} 
+                onBuy={(product) => {
+                  if (!userSession) {
+                    alert('Silakan login sebagai member terlebih dahulu untuk membeli produk.');
+                    navigate('/login-member');
+                    return;
+                  }
+                  setBuyingProduct(product);
+                  setBuyQuantity(1);
+                  setBuyStep(1);
+                  setProductPromoInput('');
+                  setProductPromoError('');
+                }}
+              />
             ))}
           </div>
           
@@ -1345,6 +1568,128 @@ export default function LandingPage() {
               </div>
             </div>
           </FadeInSection>
+        </div>
+      </section>
+
+      {/* ============ KAPSTERS SECTION ============ */}
+      <section id="kapsters" className="py-20 md:py-32 px-4 md:px-12 bg-white relative overflow-hidden border-t border-gray-200">
+        <div className="absolute inset-0 opacity-[0.015]" style={{ backgroundImage: 'radial-gradient(circle at 50% 50%, #000000 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+        <div className="max-w-7xl mx-auto relative z-10">
+          <FadeInSection delay={0}>
+            <div className="text-center mb-12 md:mb-16">
+              <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 text-gray-700 font-bold rounded-full text-[10px] md:text-xs tracking-widest uppercase mb-4">
+                <FaCut className="text-gray-500" /> Expert Team
+              </span>
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-gray-900 tracking-tight mb-4">
+                Our <span className="text-transparent bg-clip-text bg-gradient-to-r from-gray-500 to-gray-800">Kapsters</span>
+              </h2>
+              <p className="text-gray-500 text-base md:text-lg max-w-2xl mx-auto">
+                Pilih kapster profesional kami yang siap memberikan pengalaman grooming terbaik untuk Anda.
+              </p>
+            </div>
+          </FadeInSection>
+
+          <style>{`
+            @keyframes marqueeLeft {
+              0% { transform: translateX(0); }
+              100% { transform: translateX(-50%); }
+            }
+            @keyframes marqueeRight {
+              0% { transform: translateX(-50%); }
+              100% { transform: translateX(0); }
+            }
+            
+            .animate-marquee-left {
+              animation: marqueeLeft 90s linear infinite;
+            }
+            .animate-marquee-right {
+              animation: marqueeRight 90s linear infinite;
+            }
+
+            .pause-marquee-hover:hover .animate-marquee-left,
+            .pause-marquee-hover:hover .animate-marquee-right {
+              animation-play-state: paused;
+            }
+          `}</style>
+
+          <div className="w-full overflow-hidden pause-marquee-hover relative">
+            {/* Gradasi Kiri Kanan untuk efek smooth */}
+            <div className="absolute top-0 bottom-0 left-0 w-16 md:w-32 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
+            <div className="absolute top-0 bottom-0 right-0 w-16 md:w-32 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
+
+            {isLoadingDynamic ? (
+              <div className="text-center py-10 font-bold text-slate-500">Loading Kapsters...</div>
+            ) : dynamicKapsters.length === 0 ? (
+              <div className="text-center py-10 font-bold text-slate-500">Belum ada kapster.</div>
+            ) : (
+              <div className="flex flex-col gap-6 md:gap-8">
+                {/* Baris 1: Bergerak ke Kiri */}
+                <div className="flex gap-6 md:gap-8 w-max animate-marquee-left">
+                  {/* Kita duplicate agar tidak pernah putus scrollnya */}
+                  {[...dynamicKapsters.filter((_, i) => i % 2 === 0), ...dynamicKapsters.filter((_, i) => i % 2 === 0), ...dynamicKapsters.filter((_, i) => i % 2 === 0), ...dynamicKapsters.filter((_, i) => i % 2 === 0)].map((kapster, idx) => (
+                    <div key={`r1-${idx}`} className="w-[220px] md:w-[280px] flex-shrink-0">
+                      <TiltCard maxTilt={5} className="h-full">
+                        <div className="group relative rounded-[2rem] overflow-hidden aspect-[4/5] bg-gray-100 shadow-sm border border-gray-100">
+                          <img src={kapster.img_url || 'https://i.pravatar.cc/150'} alt={kapster.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy" />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent transition-opacity duration-300" />
+                          <div className="absolute inset-0 p-5 md:p-6 flex flex-col justify-end transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
+                            <div className="flex items-center gap-1.5 mb-1 opacity-80">
+                              <FaStar className="text-amber-400 text-xs" />
+                              <span className="text-white text-xs font-bold">4.8</span>
+                              <span className="text-gray-300 text-[10px] mx-1">•</span>
+                              <span className="text-gray-300 text-[10px] uppercase font-bold tracking-wider">{kapster.experience || '3 THN'}</span>
+                            </div>
+                            <h3 className="text-white font-black text-xl md:text-2xl leading-tight mb-1">{kapster.name}</h3>
+                            <p className="text-gray-300 text-sm font-medium mb-4">{kapster.specialty || 'Senior Barber'}</p>
+                            
+                            <button 
+                              onClick={() => setSelectedKapster(kapster)}
+                              className="w-full bg-white/10 hover:bg-white text-white hover:text-black font-bold py-2.5 rounded-xl backdrop-blur-md border border-white/20 transition-all duration-300 text-sm"
+                            >
+                              Lihat Detail
+                            </button>
+                          </div>
+                        </div>
+                      </TiltCard>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Baris 2: Bergerak ke Kanan */}
+                {dynamicKapsters.length > 1 && (
+                  <div className="flex gap-6 md:gap-8 w-max animate-marquee-right">
+                    {[...dynamicKapsters.filter((_, i) => i % 2 !== 0), ...dynamicKapsters.filter((_, i) => i % 2 !== 0), ...dynamicKapsters.filter((_, i) => i % 2 !== 0), ...dynamicKapsters.filter((_, i) => i % 2 !== 0)].map((kapster, idx) => (
+                      <div key={`r2-${idx}`} className="w-[220px] md:w-[280px] flex-shrink-0">
+                        <TiltCard maxTilt={5} className="h-full">
+                          <div className="group relative rounded-[2rem] overflow-hidden aspect-[4/5] bg-gray-100 shadow-sm border border-gray-100">
+                            <img src={kapster.img_url || 'https://i.pravatar.cc/150'} alt={kapster.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent transition-opacity duration-300" />
+                            <div className="absolute inset-0 p-5 md:p-6 flex flex-col justify-end transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
+                              <div className="flex items-center gap-1.5 mb-1 opacity-80">
+                                <FaStar className="text-amber-400 text-xs" />
+                                <span className="text-white text-xs font-bold">4.8</span>
+                                <span className="text-gray-300 text-[10px] mx-1">•</span>
+                                <span className="text-gray-300 text-[10px] uppercase font-bold tracking-wider">{kapster.experience || '3 THN'}</span>
+                              </div>
+                              <h3 className="text-white font-black text-xl md:text-2xl leading-tight mb-1">{kapster.name}</h3>
+                              <p className="text-gray-300 text-sm font-medium mb-4">{kapster.specialty || 'Senior Barber'}</p>
+                              
+                              <button 
+                                onClick={() => setSelectedKapster(kapster)}
+                                className="w-full bg-white/10 hover:bg-white text-white hover:text-black font-bold py-2.5 rounded-xl backdrop-blur-md border border-white/20 transition-all duration-300 text-sm"
+                              >
+                                Lihat Detail
+                              </button>
+                            </div>
+                          </div>
+                        </TiltCard>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </section>
 
@@ -1704,33 +2049,128 @@ export default function LandingPage() {
                 <img src={buyingProduct.img} alt={buyingProduct.name} className="w-16 h-16 rounded-xl object-cover" />
                 <div>
                   <h4 className="font-bold text-gray-900 leading-tight">{buyingProduct.name}</h4>
-                  <p className="text-xs text-emerald-600 font-bold mt-1">
-                    {buyingProduct.discount ? `Rp ${(parseInt(buyingProduct.price.replace(/\D/g, '')) * (1 - buyingProduct.discount / 100)).toLocaleString('id-ID')}` : buyingProduct.price}
-                  </p>
+                  {buyingProduct.promoCode ? (
+                    <div className="mt-1">
+                      <p className="text-xs text-emerald-600 font-bold">
+                        Rp {(buyingProduct.finalPriceNum * buyQuantity).toLocaleString('id-ID')}
+                      </p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <p className="text-[10px] text-gray-400 line-through">Rp {(buyingProduct.originalPriceNum * buyQuantity).toLocaleString('id-ID')}</p>
+                        <span className="text-[9px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">{buyingProduct.promoCode} Applied</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-emerald-600 font-bold mt-1">
+                      Rp {((buyingProduct.discount ? (parseInt(buyingProduct.price.replace(/\D/g, '')) * (1 - buyingProduct.discount / 100)) : parseInt(buyingProduct.price.replace(/\D/g, ''))) * buyQuantity).toLocaleString('id-ID')}
+                    </p>
+                  )}
                 </div>
               </div>
-              <form onSubmit={handleBuyProduct}>
-                <div className="mb-6">
-                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-widest mb-2">Email Pemesan</label>
-                  <input 
-                    type="email" 
-                    required 
-                    value={buyerEmail}
-                    onChange={(e) => setBuyerEmail(e.target.value)}
-                    className="w-full bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl px-4 py-3 focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-all" 
-                    placeholder="Masukkan email Anda"
-                  />
-                  <p className="text-[10px] text-gray-400 mt-2">Gunakan email ini pada fitur <strong>Cek Status Booking</strong> untuk melacak pesanan.</p>
-                </div>
-                <button 
-                  type="submit" 
-                  disabled={isBuying || buySuccess}
-                  className="w-full bg-black text-white font-bold py-4 rounded-xl hover:bg-zinc-800 transition-all flex justify-center items-center gap-2 disabled:bg-gray-200 disabled:text-gray-500"
-                >
-                  {isBuying ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : 
-                   buySuccess ? <FaCheckCircle className="text-emerald-500" /> : <FaShoppingCart />}
-                  {isBuying ? 'Memproses...' : buySuccess ? 'Berhasil Dipesan!' : 'Beli Sekarang'}
-                </button>
+              <form onSubmit={async (e) => {
+                e.preventDefault();
+                if (buyStep === 1) {
+                  // Validasi email
+                  try {
+                    const { data: userExists } = await supabase.from('users').select('id').eq('email', buyerEmail).single();
+                    if (!userExists) {
+                      alert("Email tidak terdata");
+                      navigate('/register-member');
+                      return;
+                    }
+                    setBuyStep(2);
+                  } catch (err) {
+                    alert("Email tidak terdata");
+                    navigate('/register-member');
+                  }
+                } else {
+                  handleBuyProduct(e);
+                }
+              }}>
+                {buyStep === 1 ? (
+                  <>
+                    <div className="mb-4">
+                      <label className="block text-xs font-bold text-gray-700 uppercase tracking-widest mb-2">Jumlah Pembelian</label>
+                      <div className="flex items-center gap-3">
+                        <input 
+                          type="number" 
+                          min="1" 
+                          max={buyingProduct.stok || 1}
+                          required 
+                          value={buyQuantity}
+                          onChange={(e) => {
+                            let val = parseInt(e.target.value) || 1;
+                            if (val > (buyingProduct.stok || 1)) val = buyingProduct.stok || 1;
+                            if (val < 1) val = 1;
+                            setBuyQuantity(val);
+                          }}
+                          className="w-full bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl px-4 py-3 focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-all" 
+                        />
+                        <span className="text-xs text-gray-500 font-medium whitespace-nowrap">Sisa Stok: {buyingProduct.stok || 0}</span>
+                      </div>
+                    </div>
+                    <div className="mb-6">
+                      <label className="block text-xs font-bold text-gray-700 uppercase tracking-widest mb-2">Email Pemesan</label>
+                      <input 
+                        type="email" 
+                        required 
+                        value={buyerEmail}
+                        onChange={(e) => setBuyerEmail(e.target.value)}
+                        className="w-full bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl px-4 py-3 focus:outline-none focus:border-black focus:ring-1 focus:ring-black transition-all" 
+                        placeholder="Masukkan email Anda"
+                      />
+                      <p className="text-[10px] text-gray-400 mt-2">Gunakan email ini pada fitur <strong>Cek Status Booking</strong> untuk melacak pesanan.</p>
+                    </div>
+                    <button 
+                      type="submit" 
+                      className="w-full bg-black text-white font-bold py-4 rounded-xl hover:bg-zinc-800 transition-all flex justify-center items-center gap-2"
+                    >
+                      Lanjut <FaArrowRight className="text-sm" />
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <div className="mb-6">
+                      <label className="block text-xs font-bold text-gray-700 uppercase tracking-widest mb-2">Kode Voucher Diskon</label>
+                      <div className="flex gap-2">
+                        <input 
+                          type="text" 
+                          value={productPromoInput}
+                          onChange={(e) => setProductPromoInput(e.target.value)}
+                          className="flex-1 bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl px-4 py-3 focus:outline-none focus:border-black uppercase" 
+                          placeholder="Contoh: RWD-XXXX"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleApplyProductPromo}
+                          disabled={isProductPromoLoading || !productPromoInput}
+                          className="bg-gray-900 text-white px-4 rounded-xl text-sm font-bold disabled:bg-gray-200"
+                        >
+                          {isProductPromoLoading ? 'Cek...' : 'Pakai'}
+                        </button>
+                      </div>
+                      {productPromoError && <p className="text-red-500 text-xs mt-2">{productPromoError}</p>}
+                    </div>
+                    
+                    <div className="flex gap-3">
+                      <button 
+                        type="button"
+                        onClick={() => setBuyStep(1)}
+                        className="w-1/3 bg-gray-100 text-gray-800 font-bold py-4 rounded-xl hover:bg-gray-200 transition-all"
+                      >
+                        Kembali
+                      </button>
+                      <button 
+                        type="submit" 
+                        disabled={isBuying || buySuccess}
+                        className="w-2/3 bg-black text-white font-bold py-4 rounded-xl hover:bg-zinc-800 transition-all flex justify-center items-center gap-2 disabled:bg-gray-200 disabled:text-gray-500"
+                      >
+                        {isBuying ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : 
+                         buySuccess ? <FaCheckCircle className="text-emerald-500" /> : <FaShoppingCart />}
+                        {isBuying ? 'Memproses...' : buySuccess ? 'Berhasil Dipesan!' : 'Beli Sekarang'}
+                      </button>
+                    </div>
+                  </>
+                )}
               </form>
             </div>
           </div>

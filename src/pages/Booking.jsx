@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   FaArrowLeft, FaCut, FaUserTie, FaCalendarCheck, 
   FaClock, FaCheckCircle, FaSpinner, FaChevronRight, FaStar, FaSpa, FaMagic, FaLeaf, FaWater 
@@ -17,46 +17,89 @@ export default function Booking() {
     kapster: null,
     date: '', 
     time: null,
-    price: 0
+    price: 0,
+    email: localStorage.getItem('userEmail') || ''
   });
 
-  // PROTEKSI ROUTE
+  const [services, setServices] = useState([]);
+  const [kapsters, setKapsters] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const location = useLocation();
+  const [promoCodeInput, setPromoCodeInput] = useState(location.state?.promoCode || '');
+  const [appliedPromo, setAppliedPromo] = useState(null);
+  const [isPromoLoading, setIsPromoLoading] = useState(false);
+  const [promoError, setPromoError] = useState('');
+
+  // Auto apply promo if passed from LandingPage
+  useEffect(() => {
+    if (location.state?.promoCode && step === 4 && !appliedPromo) {
+      handleApplyPromo(location.state.promoCode);
+    }
+  }, [location.state?.promoCode, step]);
+
+  // Handle pre-selected service from LandingPage
+  useEffect(() => {
+    if (location.state?.preSelectedService && step === 1) {
+      const preSelected = location.state.preSelectedService;
+      const priceValue = parseInt(preSelected.price.replace(/[^\d]/g, '')) || 0;
+      setBookingData(prev => ({
+        ...prev,
+        service: preSelected.title,
+        price: priceValue
+      }));
+      setStep(2); // Skip straight to Kapster selection
+    }
+  }, [location.state?.preSelectedService, step]);
+
+  // PROTEKSI ROUTE & FETCH DATA
   useEffect(() => {
     const userEmail = localStorage.getItem('userEmail');
     if (!userEmail) {
       navigate('/login-member', { state: { from: '/booking' } });
+      return;
     }
+
+    const fetchData = async () => {
+      try {
+        const { data: userExists } = await supabase.from('users').select('id').eq('email', userEmail).single();
+        if (!userExists) {
+          localStorage.removeItem('userEmail');
+          alert("Email tidak terdata. Silakan login atau register kembali.");
+          navigate('/register-member');
+          return;
+        }
+      } catch (err) {
+        localStorage.removeItem('userEmail');
+        alert("Email tidak terdata. Silakan login atau register kembali.");
+        navigate('/register-member');
+        return;
+      }
+
+      setIsLoading(true);
+      const [servicesRes, kapstersRes] = await Promise.all([
+        supabase.from('services').select('*'),
+        supabase.from('kapsters').select('*')
+      ]);
+
+      if (servicesRes.data) setServices(servicesRes.data);
+      if (kapstersRes.data) setKapsters(kapstersRes.data);
+      setIsLoading(false);
+    };
+
+    fetchData();
   }, [navigate]);
 
-  // DATA DUMMY LAYANAN - 9 ITEM
-  const services = [
-    { id: 1, name: 'Premium Haircut', price: 75000, duration: '45 Min', icon: FaCut, 
-      bg: 'bg-blue-50', text: 'text-blue-500', hoverBg: 'group-hover:bg-blue-500', hoverText: 'group-hover:text-blue-700', borderHover: 'hover:border-blue-200', lightHover: 'group-hover:bg-blue-50/50', shadow: 'hover:shadow-blue-500/20' },
-    { id: 2, name: 'Classic Shave', price: 50000, duration: '30 Min', icon: FaUserTie, 
-      bg: 'bg-amber-50', text: 'text-amber-500', hoverBg: 'group-hover:bg-amber-500', hoverText: 'group-hover:text-amber-700', borderHover: 'hover:border-amber-200', lightHover: 'group-hover:bg-amber-50/50', shadow: 'hover:shadow-amber-500/20' },
-    { id: 3, name: 'Hair Coloring', price: 150000, duration: '90 Min', icon: FaMagic, 
-      bg: 'bg-purple-50', text: 'text-purple-500', hoverBg: 'group-hover:bg-purple-500', hoverText: 'group-hover:text-purple-700', borderHover: 'hover:border-purple-200', lightHover: 'group-hover:bg-purple-50/50', shadow: 'hover:shadow-purple-500/20' },
-    { id: 4, name: 'Kids Haircut', price: 45000, duration: '30 Min', icon: FaCut, 
-      bg: 'bg-emerald-50', text: 'text-emerald-500', hoverBg: 'group-hover:bg-emerald-500', hoverText: 'group-hover:text-emerald-700', borderHover: 'hover:border-emerald-200', lightHover: 'group-hover:bg-emerald-50/50', shadow: 'hover:shadow-emerald-500/20' },
-    { id: 5, name: 'Hair Tattoo', price: 60000, duration: '40 Min', icon: FaCut, 
-      bg: 'bg-rose-50', text: 'text-rose-500', hoverBg: 'group-hover:bg-rose-500', hoverText: 'group-hover:text-rose-700', borderHover: 'hover:border-rose-200', lightHover: 'group-hover:bg-rose-50/50', shadow: 'hover:shadow-rose-500/20' },
-    { id: 6, name: 'Creambath', price: 85000, duration: '60 Min', icon: FaSpa, 
-      bg: 'bg-indigo-50', text: 'text-indigo-500', hoverBg: 'group-hover:bg-indigo-500', hoverText: 'group-hover:text-indigo-700', borderHover: 'hover:border-indigo-200', lightHover: 'group-hover:bg-indigo-50/50', shadow: 'hover:shadow-indigo-500/20' },
-    { id: 7, name: 'Gentleman Facial', price: 90000, duration: '45 Min', icon: FaLeaf, 
-      bg: 'bg-teal-50', text: 'text-teal-500', hoverBg: 'group-hover:bg-teal-500', hoverText: 'group-hover:text-teal-700', borderHover: 'hover:border-teal-200', lightHover: 'group-hover:bg-teal-50/50', shadow: 'hover:shadow-teal-500/20' },
-    { id: 8, name: 'Perm / Curly', price: 250000, duration: '120 Min', icon: FaWater, 
-      bg: 'bg-cyan-50', text: 'text-cyan-500', hoverBg: 'group-hover:bg-cyan-500', hoverText: 'group-hover:text-cyan-700', borderHover: 'hover:border-cyan-200', lightHover: 'group-hover:bg-cyan-50/50', shadow: 'hover:shadow-cyan-500/20' },
-    { id: 9, name: 'Scalp Treatment', price: 120000, duration: '60 Min', icon: FaSpa, 
-      bg: 'bg-fuchsia-50', text: 'text-fuchsia-500', hoverBg: 'group-hover:bg-fuchsia-500', hoverText: 'group-hover:text-fuchsia-700', borderHover: 'hover:border-fuchsia-200', lightHover: 'group-hover:bg-fuchsia-50/50', shadow: 'hover:shadow-fuchsia-500/20' },
-  ];
-
-  const kapsters = [
-    { id: 1, name: 'Andi Saputra', rating: '4.9', exp: '5 Thn', img: 'https://i.pravatar.cc/150?img=11' },
-    { id: 2, name: 'Budi Hartono', rating: '4.8', exp: '7 Thn', img: 'https://i.pravatar.cc/150?img=12' },
-    { id: 3, name: 'Reza Pahlevi', rating: '4.9', exp: '4 Thn', img: 'https://i.pravatar.cc/150?img=13' },
-    { id: 4, name: 'Dimas Anggara', rating: '4.7', exp: '3 Thn', img: 'https://i.pravatar.cc/150?img=14' },
-    { id: 5, name: 'Tio Pratama', rating: '4.9', exp: '6 Thn', img: 'https://i.pravatar.cc/150?img=15' },
-    { id: 6, name: 'Ryan Wijaya', rating: '4.8', exp: '30 Thn', img: 'https://i.pravatar.cc/150?img=17' },
+  const serviceStyles = [
+    { icon: FaCut, bg: 'bg-blue-50', text: 'text-blue-500', hoverBg: 'group-hover:bg-blue-500', hoverText: 'group-hover:text-blue-700', borderHover: 'hover:border-blue-200', lightHover: 'group-hover:bg-blue-50/50', shadow: 'hover:shadow-blue-500/20' },
+    { icon: FaUserTie, bg: 'bg-amber-50', text: 'text-amber-500', hoverBg: 'group-hover:bg-amber-500', hoverText: 'group-hover:text-amber-700', borderHover: 'hover:border-amber-200', lightHover: 'group-hover:bg-amber-50/50', shadow: 'hover:shadow-amber-500/20' },
+    { icon: FaMagic, bg: 'bg-purple-50', text: 'text-purple-500', hoverBg: 'group-hover:bg-purple-500', hoverText: 'group-hover:text-purple-700', borderHover: 'hover:border-purple-200', lightHover: 'group-hover:bg-purple-50/50', shadow: 'hover:shadow-purple-500/20' },
+    { icon: FaCut, bg: 'bg-emerald-50', text: 'text-emerald-500', hoverBg: 'group-hover:bg-emerald-500', hoverText: 'group-hover:text-emerald-700', borderHover: 'hover:border-emerald-200', lightHover: 'group-hover:bg-emerald-50/50', shadow: 'hover:shadow-emerald-500/20' },
+    { icon: FaCut, bg: 'bg-rose-50', text: 'text-rose-500', hoverBg: 'group-hover:bg-rose-500', hoverText: 'group-hover:text-rose-700', borderHover: 'hover:border-rose-200', lightHover: 'group-hover:bg-rose-50/50', shadow: 'hover:shadow-rose-500/20' },
+    { icon: FaSpa, bg: 'bg-indigo-50', text: 'text-indigo-500', hoverBg: 'group-hover:bg-indigo-500', hoverText: 'group-hover:text-indigo-700', borderHover: 'hover:border-indigo-200', lightHover: 'group-hover:bg-indigo-50/50', shadow: 'hover:shadow-indigo-500/20' },
+    { icon: FaLeaf, bg: 'bg-teal-50', text: 'text-teal-500', hoverBg: 'group-hover:bg-teal-500', hoverText: 'group-hover:text-teal-700', borderHover: 'hover:border-teal-200', lightHover: 'group-hover:bg-teal-50/50', shadow: 'hover:shadow-teal-500/20' },
+    { icon: FaWater, bg: 'bg-cyan-50', text: 'text-cyan-500', hoverBg: 'group-hover:bg-cyan-500', hoverText: 'group-hover:text-cyan-700', borderHover: 'hover:border-cyan-200', lightHover: 'group-hover:bg-cyan-50/50', shadow: 'hover:shadow-cyan-500/20' },
+    { icon: FaSpa, bg: 'bg-fuchsia-50', text: 'text-fuchsia-500', hoverBg: 'group-hover:bg-fuchsia-500', hoverText: 'group-hover:text-fuchsia-700', borderHover: 'hover:border-fuchsia-200', lightHover: 'group-hover:bg-fuchsia-50/50', shadow: 'hover:shadow-fuchsia-500/20' }
   ];
 
   const availableTimes = ['09:00', '10:00', '11:00', '13:00', '14:30', '16:00', '17:30', '19:00', '20:00'];
@@ -70,6 +113,30 @@ export default function Booking() {
 
   const nextStep = () => setStep(step + 1);
   const prevStep = () => setStep(step - 1);
+
+  const handleNextFromStep3 = async () => {
+    if (!bookingData.email) {
+      alert("Masukkan email Anda terlebih dahulu.");
+      return;
+    }
+    
+    // Validasi email di database sebelum pindah ke step 4
+    try {
+      const emailInput = bookingData.email.toLowerCase().trim();
+      const { data: userExists } = await supabase.from('users').select('id').eq('email', emailInput).single();
+      
+      if (!userExists) {
+        alert("Email tidak terdata");
+        navigate('/register-member');
+        return;
+      }
+      
+      nextStep();
+    } catch (error) {
+      alert("Email tidak terdata");
+      navigate('/register-member');
+    }
+  };
 
   const handleBack = () => {
     if (step > 1) prevStep();
@@ -90,27 +157,70 @@ export default function Booking() {
     setBookingData({ ...bookingData, date: e.target.value, time: null });
   };
 
-  const handleSubmit = async () => {
-    setIsSubmitting(true);
+  const handleApplyPromo = async (codeToApply = promoCodeInput) => {
+    if (!codeToApply) return;
+    setIsPromoLoading(true);
+    setPromoError('');
     
     try {
-      const userEmail = localStorage.getItem('userEmail');
+      const { data, error } = await supabase
+        .from('promos')
+        .select('*')
+        .eq('code', codeToApply.toUpperCase())
+        .single();
+        
+      if (error || !data) {
+        throw new Error('Kode promo tidak ditemukan.');
+      }
+      if (data.status !== 'Aktif' && data.status !== 'Active') {
+        throw new Error('Kode promo sudah tidak aktif.');
+      }
       
+      let discountAmount = 0;
+      if (data.discount.includes('%')) {
+        const percentage = parseInt(data.discount.replace('%', ''));
+        discountAmount = (bookingData.price * percentage) / 100;
+      } else if (data.discount.toLowerCase().includes('rp')) {
+        const amountStr = data.discount.replace(/[^\d]/g, '');
+        discountAmount = parseInt(amountStr);
+      }
+      
+      setAppliedPromo({
+        ...data,
+        discountAmount: discountAmount
+      });
+    } catch (err) {
+      setPromoError(err.message);
+      setAppliedPromo(null);
+    } finally {
+      setIsPromoLoading(false);
+    }
+  };
+
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    const finalHarga = appliedPromo ? Math.max(0, bookingData.price - appliedPromo.discountAmount) : bookingData.price;
+    
+    try {
       const { error } = await supabase
         .from('haircut_bookings')
         .insert([{
-          email: userEmail,
+          email: bookingData.email,
           layanan: bookingData.service,
           kapster: bookingData.kapster,
           tanggal: bookingData.date,
           waktu: bookingData.time,
-          harga: bookingData.price.toString(), // konversi ke text jika kolom di DB adalah text
+          harga: finalHarga.toString(),
           status: 'Menunggu Konfirmasi'
         }]);
 
       if (error) throw error;
       
-      setIsSubmitting(false);
+      // Update promo if applied
+      if (appliedPromo) {
+        await supabase.from('promos').update({ status: 'Terpakai' }).eq('code', appliedPromo.code);
+      }
+      
       setIsSuccess(true);
     } catch (error) {
       console.error("Gagal melakukan booking", error);
@@ -204,35 +314,40 @@ export default function Booking() {
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-                {services.map((service, idx) => (
-                  <button 
-                    key={service.id}
-                    onClick={() => handleServiceSelect(service)}
-                    className={`bg-white border-2 border-slate-100 p-8 rounded-[2.5rem] text-left transition-all duration-300 group focus:outline-none flex flex-col justify-between aspect-square md:aspect-auto md:min-h-[280px] relative overflow-hidden active:scale-[0.98] hover:-translate-y-2 ${service.borderHover} shadow-sm ${service.shadow}`}
-                    style={{ animationDelay: `${idx * 50}ms` }}
-                  >
-                    <div className={`absolute inset-0 opacity-0 transition-colors duration-500 z-0 ${service.lightHover}`}></div>
-                    
-                    <div className="flex justify-between items-start w-full relative z-10">
-                      <div className={`w-20 h-20 rounded-[1.5rem] flex items-center justify-center text-4xl transition-all duration-500 shadow-sm border border-white group-hover:scale-110 group-hover:-rotate-12 group-hover:text-white ${service.bg} ${service.text} ${service.hoverBg}`}>
-                        <service.icon />
+                {isLoading ? (
+                  <div className="col-span-full text-center py-10 font-bold text-slate-500">Loading...</div>
+                ) : services.map((service, idx) => {
+                  const style = serviceStyles[idx % serviceStyles.length];
+                  return (
+                    <button 
+                      key={service.id}
+                      onClick={() => handleServiceSelect(service)}
+                      className={`bg-white border-2 border-slate-100 p-8 rounded-[2.5rem] text-left transition-all duration-300 group focus:outline-none flex flex-col justify-between aspect-square md:aspect-auto md:min-h-[280px] relative overflow-hidden active:scale-[0.98] hover:-translate-y-2 ${style.borderHover} shadow-sm ${style.shadow}`}
+                      style={{ animationDelay: `${idx * 50}ms` }}
+                    >
+                      <div className={`absolute inset-0 opacity-0 transition-colors duration-500 z-0 ${style.lightHover}`}></div>
+                      
+                      <div className="flex justify-between items-start w-full relative z-10">
+                        <div className={`w-20 h-20 rounded-[1.5rem] flex items-center justify-center text-4xl transition-all duration-500 shadow-sm border border-white group-hover:scale-110 group-hover:-rotate-12 group-hover:text-white ${style.bg} ${style.text} ${style.hoverBg}`}>
+                          <style.icon />
+                        </div>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100 group-hover:bg-white transition-colors">{service.duration || '30 Min'}</span>
                       </div>
-                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100 group-hover:bg-white transition-colors">{service.duration}</span>
-                    </div>
-                    
-                    <div className="w-full relative z-10 mt-auto pt-6">
-                      <h3 className={`font-black text-2xl text-slate-900 leading-tight mb-3 transition-colors duration-300 ${service.hoverText}`}>{service.name}</h3>
-                      <div className="flex items-center justify-between">
-                        <p className="text-base font-bold text-slate-600 bg-white px-3 py-1.5 rounded-lg shadow-sm border border-slate-100">
-                          Rp {service.price.toLocaleString('id-ID')}
-                        </p>
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 bg-slate-50 text-slate-400 border border-slate-100 group-hover:text-white ${service.hoverBg}`}>
-                          <FaChevronRight className="text-sm group-hover:translate-x-1 transition-transform" />
+                      
+                      <div className="w-full relative z-10 mt-auto pt-6">
+                        <h3 className={`font-black text-2xl text-slate-900 leading-tight mb-3 transition-colors duration-300 ${style.hoverText}`}>{service.name}</h3>
+                        <div className="flex items-center justify-between">
+                          <p className="text-base font-bold text-slate-600 bg-white px-3 py-1.5 rounded-lg shadow-sm border border-slate-100">
+                            Rp {service.price?.toLocaleString('id-ID')}
+                          </p>
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 bg-slate-50 text-slate-400 border border-slate-100 group-hover:text-white ${style.hoverBg}`}>
+                            <FaChevronRight className="text-sm group-hover:translate-x-1 transition-transform" />
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </button>
-                ))}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -246,7 +361,9 @@ export default function Booking() {
               </div>
               
               <div className="grid grid-cols-2 md:grid-cols-3 gap-6 md:gap-8">
-                {kapsters.map((kapster, idx) => (
+                {isLoading ? (
+                  <div className="col-span-full text-center py-10 font-bold text-slate-500">Loading...</div>
+                ) : kapsters.map((kapster, idx) => (
                   <button 
                     key={kapster.id}
                     onClick={() => handleKapsterSelect(kapster)}
@@ -256,16 +373,16 @@ export default function Booking() {
                     <div className="absolute inset-0 bg-blue-50/0 group-hover:bg-blue-50/50 transition-colors duration-500 pointer-events-none"></div>
                     
                     <div className="w-28 h-28 md:w-32 md:h-32 mx-auto rounded-full overflow-hidden mb-6 border-4 border-slate-50 group-hover:border-blue-100 transition-all duration-500 shadow-sm relative z-10">
-                      <img src={kapster.img} alt={kapster.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                      <img src={kapster.img_url || 'https://i.pravatar.cc/150'} alt={kapster.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                     </div>
                     <h3 className="font-black text-xl text-slate-900 mb-3 group-hover:text-blue-700 transition-colors relative z-10">{kapster.name}</h3>
                     
                     <div className="flex flex-col items-center gap-2 relative z-10">
                       <span className="flex items-center justify-center gap-1.5 bg-amber-50 text-amber-600 px-4 py-1.5 rounded-lg border border-amber-100 text-[10px] font-black uppercase tracking-widest w-full">
-                        <FaStar className="text-amber-400 text-sm" /> {kapster.rating}
+                        <FaStar className="text-amber-400 text-sm" /> 4.8
                       </span>
                       <span className="bg-slate-50 text-slate-500 px-4 py-1.5 rounded-lg border border-slate-100 text-[10px] font-bold uppercase tracking-widest w-full">
-                        Pengalaman: {kapster.exp}
+                        Pengalaman: {kapster.experience || '3 Tahun'}
                       </span>
                     </div>
                   </button>
@@ -284,8 +401,8 @@ export default function Booking() {
                 </div>
                 <div className="hidden md:block">
                   <button 
-                    onClick={nextStep}
-                    disabled={!bookingData.date || !bookingData.time}
+                    onClick={handleNextFromStep3}
+                    disabled={!bookingData.date || !bookingData.time || !bookingData.email}
                     className="bg-slate-900 text-white font-bold py-4 px-10 rounded-full hover:bg-black disabled:bg-slate-200 disabled:text-slate-400 transition-all flex items-center justify-center gap-3 shadow-[0_10px_30px_rgba(0,0,0,0.1)] hover:shadow-[0_15px_35px_rgba(0,0,0,0.2)] hover:-translate-y-1 active:scale-95 w-full sm:w-auto text-sm group"
                   >
                     Lanjut ke Konfirmasi <FaChevronRight className="text-xs group-hover:translate-x-1 transition-transform" />
@@ -340,7 +457,7 @@ export default function Booking() {
                         <h3 className="text-base font-black text-slate-800 uppercase tracking-widest">Pilih Slot Waktu</h3>
                       </div>
                       
-                      <div className="grid grid-cols-3 sm:grid-cols-4 gap-4 ml-0 md:ml-14">
+                      <div className="grid grid-cols-3 sm:grid-cols-4 gap-4 ml-0 md:ml-14 mb-8">
                         {availableTimes.map((time, idx) => (
                           <button 
                             key={idx}
@@ -355,6 +472,23 @@ export default function Booking() {
                           </button>
                         ))}
                       </div>
+
+                      <div className="flex items-center gap-4 mb-6">
+                        <div className="w-10 h-10 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center text-lg font-black border border-orange-100">3</div>
+                        <h3 className="text-base font-black text-slate-800 uppercase tracking-widest">Konfirmasi Email</h3>
+                      </div>
+                      
+                      <div className="ml-0 md:ml-14">
+                        <input 
+                          type="email" 
+                          required 
+                          value={bookingData.email}
+                          onChange={(e) => setBookingData({...bookingData, email: e.target.value})}
+                          className="w-full bg-slate-50 border-2 border-slate-100 text-slate-900 text-sm rounded-2xl px-6 py-4 focus:outline-none focus:border-orange-400 focus:bg-white transition-all font-semibold" 
+                          placeholder="Masukkan email Anda"
+                        />
+                        <p className="text-[10px] text-slate-400 mt-2 font-medium">Email ini akan diverifikasi saat Anda melanjutkan ke Konfirmasi.</p>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -363,8 +497,8 @@ export default function Booking() {
               {/* Tombol Lanjut Mobile */}
               <div className="flex justify-end w-full md:hidden">
                 <button 
-                  onClick={nextStep}
-                  disabled={!bookingData.date || !bookingData.time}
+                  onClick={handleNextFromStep3}
+                  disabled={!bookingData.date || !bookingData.time || !bookingData.email}
                   className="bg-slate-900 text-white font-bold py-5 px-12 rounded-full hover:bg-black disabled:bg-slate-200 disabled:text-slate-400 transition-all flex items-center justify-center gap-3 shadow-lg w-full text-sm group"
                 >
                   Lanjut ke Konfirmasi <FaChevronRight className="text-xs group-hover:translate-x-1 transition-transform" />
@@ -416,11 +550,61 @@ export default function Booking() {
 
                 {/* Bagian Total Harga & Tombol Aksi */}
                 <div className="lg:col-span-5 flex flex-col gap-6">
+                  {/* Input Promo Code */}
+                  <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm relative z-10">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Punya Kode Voucher?</p>
+                    <div className="flex gap-3">
+                      <input 
+                        type="text"
+                        value={promoCodeInput}
+                        onChange={(e) => setPromoCodeInput(e.target.value.toUpperCase())}
+                        placeholder="Masukkan kode promo"
+                        className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none focus:border-blue-500 uppercase"
+                      />
+                      <button 
+                        onClick={() => handleApplyPromo()}
+                        disabled={isPromoLoading || !promoCodeInput}
+                        className="bg-slate-900 text-white px-6 py-3 rounded-xl font-bold text-sm hover:bg-black disabled:bg-slate-300 transition-colors"
+                      >
+                        {isPromoLoading ? 'Cek...' : 'Terapkan'}
+                      </button>
+                    </div>
+                    {promoError && <p className="text-red-500 text-xs font-bold mt-2">{promoError}</p>}
+                    {appliedPromo && (
+                      <div className="mt-4 p-3 bg-emerald-50 border border-emerald-100 rounded-xl flex items-start gap-3">
+                        <FaCheckCircle className="text-emerald-500 mt-0.5" />
+                        <div>
+                          <p className="text-xs font-bold text-emerald-800">Promo Berhasil Digunakan!</p>
+                          <p className="text-[10px] text-emerald-600 font-medium">Diskon: {appliedPromo.discount} ({appliedPromo.title})</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
                   <div className="bg-slate-900 rounded-[3rem] p-10 text-white flex-grow flex flex-col justify-center relative overflow-hidden shadow-xl">
                     <div className="absolute right-0 bottom-0 w-64 h-64 bg-green-400/10 rounded-full blur-3xl translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
                     
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 relative z-10">Total Pembayaran</p>
-                    <p className="text-5xl md:text-6xl font-black tracking-tighter mb-8 relative z-10">Rp {bookingData.price.toLocaleString('id-ID')}</p>
+                    {appliedPromo ? (
+                      <>
+                        <div className="flex justify-between items-center mb-2 relative z-10">
+                          <span className="text-sm text-slate-400">Subtotal</span>
+                          <span className="text-sm text-slate-300 line-through">Rp {bookingData.price.toLocaleString('id-ID')}</span>
+                        </div>
+                        <div className="flex justify-between items-center mb-6 border-b border-white/10 pb-4 relative z-10">
+                          <span className="text-sm text-emerald-400">Diskon Promo</span>
+                          <span className="text-sm font-bold text-emerald-400">- Rp {appliedPromo.discountAmount.toLocaleString('id-ID')}</span>
+                        </div>
+                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 relative z-10">Total Pembayaran</p>
+                        <p className="text-5xl md:text-6xl font-black tracking-tighter mb-8 relative z-10">
+                          Rp {Math.max(0, bookingData.price - appliedPromo.discountAmount).toLocaleString('id-ID')}
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 relative z-10">Total Pembayaran</p>
+                        <p className="text-5xl md:text-6xl font-black tracking-tighter mb-8 relative z-10">Rp {bookingData.price.toLocaleString('id-ID')}</p>
+                      </>
+                    )}
                     
                     <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 px-4 py-3 rounded-xl w-fit relative z-10">
                       <FaCheckCircle className="text-emerald-400 text-lg" /> 

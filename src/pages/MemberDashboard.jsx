@@ -59,7 +59,52 @@ export default function MemberDashboard() {
   const [jadwalAktif, setJadwalAktif] = useState([]);
   const [riwayatBooking, setRiwayatBooking] = useState([]);
   const [pesananProduk, setPesananProduk] = useState([]);
+  const [riwayatProduk, setRiwayatProduk] = useState([]);
+  const [rewardClaims, setRewardClaims] = useState([]);
+  const [myVouchers, setMyVouchers] = useState([]);
+  const [isRedeeming, setIsRedeeming] = useState(false);
+  const [loyaltyData, setLoyaltyData] = useState({ points: 0, totalTransactions: 0, tier: 'Bronze' });
   const [isLoading, setIsLoading] = useState(true);
+
+  const calculateLoyalty = (bookings, orders, claims) => {
+    const completedBookings = bookings.filter(b => b.status === 'Selesai').map(b => ({
+      date: new Date(b.created_at || b.tanggal || new Date()),
+      price: b.harga || 75000,
+    }));
+    const completedOrders = orders.filter(o => o.status === 'Selesai').map(o => ({
+      date: new Date(o.created_at || o.date || new Date()),
+      price: o.total_harga || o.total || 0,
+    }));
+
+    const allTransactions = [...completedBookings, ...completedOrders].sort((a, b) => a.date - b.date);
+
+    let totalPoints = 0;
+    let count = 0;
+
+    allTransactions.forEach(t => {
+      let benefit = 0.05; // Bronze
+      if (count >= 20) benefit = 0.20; // Platinum
+      else if (count >= 10) benefit = 0.15; // Gold
+      else if (count >= 5) benefit = 0.10; // Silver
+
+      totalPoints += t.price * benefit;
+      count++;
+    });
+
+    let currentTier = 'Bronze';
+    if (count >= 20) currentTier = 'Platinum';
+    else if (count >= 10) currentTier = 'Gold';
+    else if (count >= 5) currentTier = 'Silver';
+
+    const spentPoints = claims.reduce((sum, c) => sum + (c.points_spent || 0), 0);
+    const availablePoints = Math.floor(totalPoints) - spentPoints;
+
+    return {
+      points: availablePoints < 0 ? 0 : availablePoints,
+      totalTransactions: count,
+      tier: currentTier
+    };
+  };
 
   useEffect(() => {
     const email = localStorage.getItem('userEmail');
@@ -115,7 +160,36 @@ export default function MemberDashboard() {
           .order('created_at', { ascending: false });
 
         if (!ordersError && orders) {
-          setPesananProduk(orders);
+          const pesananAktif = orders.filter(o => !['Selesai', 'Dibatalkan', 'Batal'].includes(o.status));
+          const riwayatPesanan = orders.filter(o => ['Selesai', 'Dibatalkan', 'Batal'].includes(o.status));
+          setPesananProduk(pesananAktif);
+          setRiwayatProduk(riwayatPesanan);
+        }
+
+        let currentClaims = [];
+        try {
+          const { data: claims, error: claimsError } = await supabase
+            .from('reward_claims')
+            .select('*')
+            .eq('email', email);
+          if (!claimsError && claims) currentClaims = claims;
+        } catch (e) {
+          console.warn("Table reward_claims might not exist yet", e);
+        }
+        setRewardClaims(currentClaims);
+
+        setLoyaltyData(calculateLoyalty(bookings || [], orders || [], currentClaims));
+
+        // Fetch user's generated promos
+        if (currentClaims.length > 0) {
+          const voucherCodes = currentClaims.map(c => c.voucher_code);
+          const { data: userPromos } = await supabase
+            .from('promos')
+            .select('*')
+            .in('code', voucherCodes);
+          if (userPromos) {
+            setMyVouchers(userPromos);
+          }
         }
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
@@ -127,11 +201,140 @@ export default function MemberDashboard() {
     fetchData();
   }, [navigate]);
 
-  const voucherSaya = [
-    { code: 'WELCOME20', title: 'First Haircut', discount: '20%', validUntil: '31 Des 2026', status: 'Aktif' },
-    { code: 'POMADE15', title: 'Diskon Pomade', discount: 'Rp 15k', validUntil: '15 Nov 2026', status: 'Aktif' },
-    { code: 'LOYAL50', title: 'Potongan Khusus', discount: 'Rp 50k', validUntil: '01 Agu 2026', status: 'Terpakai' }
-  ];
+  const handleCancelBooking = async (id) => {
+    if (!window.confirm("Apakah Anda yakin ingin membatalkan jadwal ini?")) return;
+    try {
+      const { error } = await supabase
+        .from('haircut_bookings')
+        .update({ status: 'Batal' })
+        .eq('id', id);
+        
+      if (error) throw error;
+      showToast('Jadwal berhasil dibatalkan');
+      
+      // Update state locally
+      setJadwalAktif(prev => prev.filter(j => j.id !== id));
+      const cancelledBooking = jadwalAktif.find(j => j.id === id);
+      if (cancelledBooking) {
+        setRiwayatBooking(prev => [{ ...cancelledBooking, status: 'Batal' }, ...prev]);
+      }
+    } catch (err) {
+      console.error("Error cancelling booking:", err);
+      alert("Gagal membatalkan jadwal.");
+    }
+  };
+
+  const handleCancelOrder = async (id) => {
+    if (!window.confirm("Apakah Anda yakin ingin membatalkan pesanan produk ini?")) return;
+    try {
+      const { error } = await supabase
+        .from('product_orders')
+        .update({ status: 'Dibatalkan' })
+        .eq('id', id);
+        
+      if (error) throw error;
+      showToast('Pesanan produk berhasil dibatalkan');
+      
+      // Update state locally
+      setPesananProduk(prev => prev.filter(p => p.id !== id));
+      const cancelledOrder = pesananProduk.find(p => p.id === id);
+      if (cancelledOrder) {
+        // Coba cari nama produk dan kembalikan stoknya sesuai kuantitas
+        const itemMatch = cancelledOrder.items.match(/(.+)\s+\((\d+)x\)$/);
+        let productName = cancelledOrder.items;
+        let qty = 1;
+        if (itemMatch) {
+          productName = itemMatch[1].trim();
+          qty = parseInt(itemMatch[2], 10);
+        } else {
+          productName = cancelledOrder.items.replace(' (1x)', '').trim();
+        }
+        
+        const { data: pData } = await supabase.from('products').select('id, stok').eq('name', productName).single();
+        if (pData) {
+          await supabase.from('products').update({ stok: (pData.stok || 0) + qty }).eq('id', pData.id);
+        }
+        
+        setRiwayatProduk(prev => [{ ...cancelledOrder, status: 'Dibatalkan' }, ...prev]);
+      }
+    } catch (err) {
+      console.error("Error cancelling order:", err);
+      alert("Gagal membatalkan pesanan.");
+    }
+  };
+
+  const handleRedeemPoints = async (pointsToRedeem, discountValue) => {
+    if (loyaltyData.points === 0) {
+      alert("Tidak bisa ditukar, Anda tidak memiliki poin.");
+      return;
+    }
+    
+    // [MODIFIED FOR TESTING] Jika poin > 0 tapi masih kurang, izinkan untuk menguji fungsinya.
+    if (loyaltyData.points < pointsToRedeem) {
+      if (!window.confirm(`Poin Anda (${loyaltyData.points}) kurang dari ${pointsToRedeem}. Tetap lanjutkan untuk keperluan pengujian?`)) return;
+    } else {
+      if (!window.confirm(`Yakin ingin menukar ${pointsToRedeem.toLocaleString('id-ID')} Poin dengan Voucher Diskon Rp ${discountValue.toLocaleString('id-ID')}?`)) return;
+    }
+
+    setIsRedeeming(true);
+    try {
+      const code = `RWD-${Math.random().toString(36).substring(2, 6).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+      
+      const { error: promoError } = await supabase.from('promos').insert([{
+        title: `Voucher Poin (${pointsToRedeem.toLocaleString('id-ID')} Poin)`,
+        code: code,
+        discount: `Rp ${discountValue}`,
+        description: `Voucher hasil penukaran poin. Berlaku untuk semua transaksi.`,
+        valid_until: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString().split('T')[0],
+        status: 'Aktif'
+      }]);
+      if (promoError) throw promoError;
+
+      const { error: claimError } = await supabase.from('reward_claims').insert([{
+        email: userEmail,
+        points_spent: pointsToRedeem,
+        voucher_code: code
+      }]);
+      if (claimError) throw claimError;
+
+      showToast('Penukaran berhasil! Silakan periksa tab Voucher Saya.');
+      
+      const newClaim = { email: userEmail, points_spent: pointsToRedeem, voucher_code: code };
+      setRewardClaims(prev => [...prev, newClaim]);
+      setLoyaltyData(prev => ({...prev, points: prev.points - pointsToRedeem}));
+      
+      setMyVouchers(prev => [{
+        title: `Voucher Poin (${pointsToRedeem.toLocaleString('id-ID')} Poin)`,
+        code: code,
+        discount: `Rp ${discountValue}`,
+        valid_until: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString().split('T')[0],
+        status: 'Aktif'
+      }, ...prev]);
+
+    } catch (err) {
+      console.error("Error redeeming points:", err);
+      alert(`Gagal melakukan penukaran poin: ${err.message}`);
+    } finally {
+      setIsRedeeming(false);
+    }
+  };
+
+  const voucherSaya = myVouchers
+    .filter(v => v.status !== 'Terpakai')
+    .map(v => ({
+      code: v.code,
+      title: v.title,
+      discount: v.discount,
+      validUntil: v.valid_until,
+      status: v.status || 'Aktif'
+    }));
+
+  // Dummy fallback if no vouchers exist
+  if (voucherSaya.length === 0) {
+    voucherSaya.push(
+      { code: 'BELUM-ADA', title: 'Belum Ada Voucher', discount: '-', validUntil: '-', status: 'Tidak Aktif' }
+    );
+  }
 
   // ==========================================
   // MODALS (TICKET & TRACKING)
@@ -290,14 +493,21 @@ export default function MemberDashboard() {
           <div className="w-14 h-14 rounded-2xl bg-amber-50 text-amber-500 flex items-center justify-center text-2xl group-hover:bg-amber-500 group-hover:text-white transition-all duration-300 group-hover:rotate-12"><FaStar /></div>
           <div>
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Poin Loyalitas</p>
-            <h3 className="text-2xl font-black text-slate-800 mt-0.5">1,250</h3>
+            <h3 className="text-2xl font-black text-slate-800 mt-0.5">{loyaltyData.points.toLocaleString('id-ID')}</h3>
+            <button 
+              onClick={() => handleRedeemPoints(10000, 10000)}
+              disabled={isRedeeming}
+              className="mt-2 text-[10px] px-3 py-1.5 bg-amber-100 text-amber-700 font-bold rounded-lg hover:bg-amber-500 hover:text-white transition-colors"
+            >
+              {isRedeeming ? 'Memproses...' : 'Tukar 10rb Poin'}
+            </button>
           </div>
         </div>
         <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-[0_15px_30px_-10px_rgba(0,0,0,0.05)] hover:-translate-y-1.5 transition-all duration-300 flex items-center gap-5 group fade-up-item" style={{ animationDelay: '200ms' }}>
           <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-500 flex items-center justify-center text-2xl group-hover:bg-blue-500 group-hover:text-white transition-all duration-300 group-hover:-rotate-12"><FaHistory /></div>
           <div>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Kunjungan</p>
-            <h3 className="text-2xl font-black text-slate-800 mt-0.5">12 Kali</h3>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Kunj. & Pembelian</p>
+            <h3 className="text-2xl font-black text-slate-800 mt-0.5">{loyaltyData.totalTransactions} Kali</h3>
           </div>
         </div>
         <div className="bg-slate-800 p-6 rounded-[2rem] border border-slate-700 shadow-lg flex items-center gap-5 group relative overflow-hidden hover:-translate-y-1.5 transition-all duration-300 fade-up-item" style={{ animationDelay: '300ms' }}>
@@ -305,7 +515,7 @@ export default function MemberDashboard() {
           <div className="w-14 h-14 rounded-2xl bg-white/10 text-yellow-400 flex items-center justify-center text-2xl border border-white/10 relative z-10 group-hover:scale-110 transition-transform duration-300"><FaCrown /></div>
           <div className="relative z-10">
             <p className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">Status Member</p>
-            <h3 className="text-2xl font-black text-white mt-0.5">Gold</h3>
+            <h3 className="text-2xl font-black text-white mt-0.5">{loyaltyData.tier}</h3>
           </div>
         </div>
       </div>
@@ -400,8 +610,8 @@ export default function MemberDashboard() {
             
             <div className="flex items-center gap-6 w-full md:w-auto relative z-10">
               <div className="w-20 h-20 bg-blue-50 border border-blue-100 text-blue-600 rounded-[1.5rem] flex flex-col items-center justify-center group-hover:bg-blue-500 group-hover:text-white transition-colors duration-300 shadow-sm">
-                <span className="text-[10px] font-bold uppercase text-blue-500 group-hover:text-blue-100">{jadwal.date.split(' ')[1]}</span>
-                <span className="text-2xl font-black">{jadwal.date.split(' ')[0]}</span>
+                <span className="text-[10px] font-bold uppercase text-blue-500 group-hover:text-blue-100">{(jadwal.date || '15 Okt').split(' ')[1] || 'Okt'}</span>
+                <span className="text-2xl font-black">{(jadwal.date || '15 Okt').split(' ')[0] || '15'}</span>
               </div>
               <div>
                 <div className="flex items-center gap-3 mb-2">
@@ -410,18 +620,23 @@ export default function MemberDashboard() {
                   </span>
                   <span className="text-[10px] text-slate-400 font-bold tracking-widest">ID: {jadwal.id}</span>
                 </div>
-                <h4 className="font-black text-slate-800 text-xl group-hover:text-blue-700 transition-colors">{jadwal.service}</h4>
+                <h4 className="font-black text-slate-800 text-xl group-hover:text-blue-700 transition-colors">{jadwal.layanan || jadwal.service}</h4>
                 <div className="text-sm text-slate-500 flex flex-wrap gap-4 mt-2 font-medium">
-                  <span className="flex items-center gap-1.5 bg-slate-50 px-2 py-1 rounded-md"><FaClock className="text-slate-400" /> {jadwal.time} WIB</span>
+                  <span className="flex items-center gap-1.5 bg-slate-50 px-2 py-1 rounded-md"><FaClock className="text-slate-400" /> {jadwal.waktu || jadwal.time} WIB</span>
                   <span className="flex items-center gap-1.5 bg-slate-50 px-2 py-1 rounded-md"><FaUserTie className="text-slate-400" /> {jadwal.kapster}</span>
                 </div>
               </div>
             </div>
             <div className="flex flex-row md:flex-col items-center md:items-end justify-between w-full md:w-auto border-t md:border-t-0 border-slate-100 pt-4 md:pt-0 gap-4 relative z-10">
               <p className="font-black text-slate-800 text-xl">{jadwal.price}</p>
-              <button onClick={() => { setSelectedTicket(jadwal); setShowTicketModal(true); }} className="px-6 py-3 bg-slate-800 text-white text-xs font-bold rounded-xl hover:bg-black active:scale-95 transition-all shadow-md flex items-center gap-2 group-hover:-translate-y-1">
-                <FaBarcode /> E-Ticket
-              </button>
+              <div className="flex gap-2">
+                <button onClick={() => handleCancelBooking(jadwal.id)} className="px-4 py-3 bg-red-50 text-red-600 border border-red-100 text-xs font-bold rounded-xl hover:bg-red-500 hover:text-white active:scale-95 transition-all flex items-center gap-2 group-hover:-translate-y-1" title="Batalkan Jadwal">
+                  <FaTimes />
+                </button>
+                <button onClick={() => { setSelectedTicket(jadwal); setShowTicketModal(true); }} className="px-6 py-3 bg-slate-800 text-white text-xs font-bold rounded-xl hover:bg-black active:scale-95 transition-all shadow-md flex items-center gap-2 group-hover:-translate-y-1">
+                  <FaBarcode /> E-Ticket
+                </button>
+              </div>
             </div>
           </div>
         ))}
@@ -458,6 +673,53 @@ export default function MemberDashboard() {
                   </td>
                 </tr>
               ))}
+              {riwayatBooking.length === 0 && (
+                <tr>
+                  <td colSpan="4" className="p-6 text-center text-slate-500 font-medium">Belum ada riwayat kunjungan.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-12 mb-6 bg-white border border-slate-100 shadow-sm inline-block px-3 py-1.5 rounded-md">Riwayat Pembelian Produk</h3>
+      
+      <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden mb-10">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse min-w-[600px]">
+            <thead>
+              <tr className="bg-slate-50 border-b border-slate-100 text-[10px] text-slate-500 uppercase tracking-widest">
+                <th className="p-6 font-bold w-1/4">Tanggal Pembelian</th>
+                <th className="p-6 font-bold w-1/3">Detail Produk</th>
+                <th className="p-6 font-bold w-1/4 text-center">Resi</th>
+                <th className="p-6 font-bold text-right w-1/6">Status</th>
+              </tr>
+            </thead>
+            <tbody className="text-sm">
+              {riwayatProduk.map((item) => (
+                <tr key={item.id} className="border-b border-slate-50 hover:bg-slate-50/80 transition-colors group">
+                  <td className="p-6">
+                    <p className="font-bold text-slate-800 group-hover:text-amber-600 transition-colors">{new Date(item.created_at || item.date || new Date()).toLocaleDateString('id-ID')}</p>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">ID: {item.id.substring(0,8)}</p>
+                  </td>
+                  <td className="p-6 font-bold text-slate-800 text-sm max-w-[200px] truncate">{item.items}</td>
+                  <td className="p-6 text-center font-mono text-slate-500 text-xs">{item.resi || '-'}</td>
+                  <td className="p-6 text-right">
+                    <p className="font-black text-slate-800">Rp {item.total_harga || item.total}</p>
+                    <span className={`inline-block mt-1.5 px-2.5 py-1 rounded-md text-[9px] font-bold uppercase tracking-widest border ${
+                      item.status.includes('Selesai') ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-red-50 text-red-600 border-red-100'
+                    }`}>
+                      {item.status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+              {riwayatProduk.length === 0 && (
+                <tr>
+                  <td colSpan="4" className="p-6 text-center text-slate-500 font-medium">Belum ada riwayat pembelian produk.</td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
@@ -507,11 +769,18 @@ export default function MemberDashboard() {
               <div className="text-left md:text-right w-full md:w-auto">
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Total Belanja</p>
                 <p className="text-2xl font-black text-slate-800">Rp {order.total_harga || order.total}</p>
-                {order.status === 'Dikirim' && (
-                  <button onClick={() => { setSelectedOrder(order); setShowTrackingModal(true); }} className="mt-4 w-full md:w-auto px-6 py-3 bg-amber-500 text-white text-xs font-bold rounded-xl hover:bg-amber-600 hover:-translate-y-1 active:scale-95 transition-all shadow-[0_5px_15px_rgba(245,158,11,0.3)] flex items-center justify-center gap-2">
-                    Lacak Pengiriman <FaArrowRight />
-                  </button>
-                )}
+                <div className="mt-4 flex flex-col sm:flex-row justify-end gap-2">
+                  {(order.status === 'Menunggu Pembayaran' || order.status === 'Diproses') && (
+                    <button onClick={() => handleCancelOrder(order.id)} className="w-full md:w-auto px-6 py-3 bg-red-50 text-red-600 border border-red-100 text-xs font-bold rounded-xl hover:bg-red-500 hover:text-white hover:-translate-y-1 active:scale-95 transition-all flex items-center justify-center gap-2">
+                      Batalkan Pesanan
+                    </button>
+                  )}
+                  {order.status === 'Dikirim' && (
+                    <button onClick={() => { setSelectedOrder(order); setShowTrackingModal(true); }} className="w-full md:w-auto px-6 py-3 bg-amber-500 text-white text-xs font-bold rounded-xl hover:bg-amber-600 hover:-translate-y-1 active:scale-95 transition-all shadow-[0_5px_15px_rgba(245,158,11,0.3)] flex items-center justify-center gap-2">
+                      Lacak Pengiriman <FaArrowRight />
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </div>

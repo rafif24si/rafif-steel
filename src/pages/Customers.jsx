@@ -5,41 +5,11 @@ import Badge from "../components/Badge";
 import Modal from "../components/Modal";
 import InputField from "../components/InputField";
 import { FaSearch, FaEllipsisV, FaIdBadge, FaCrown, FaStar, FaMedal, FaPhoneAlt } from 'react-icons/fa';
+import { supabase } from '../lib/supabaseClient';
 
 export default function Customers() {
-  // Menggunakan 30 data dummy dari file CSV yang dilampirkan
-  const [customers, setCustomers] = useState([
-    { id: "BS-CRM-001", name: "Dimas Pratama", email: "dimas45@gmail.com", phone: "081239958838", role: "Gold" },
-    { id: "BS-CRM-002", name: "Roni Simanjuntak", email: "roni13@gmail.com", phone: "081236687537", role: "Classic" },
-    { id: "BS-CRM-003", name: "Rio Kusuma", email: "rio37@gmail.com", phone: "081255176955", role: "Classic" },
-    { id: "BS-CRM-004", name: "Zaki Saputra", email: "zaki80@gmail.com", phone: "081294374605", role: "Classic" },
-    { id: "BS-CRM-005", name: "Zaki Setiawan", email: "zaki68@gmail.com", phone: "081258966946", role: "Classic" },
-    { id: "BS-CRM-006", name: "Aldi Tanjung", email: "aldi58@gmail.com", phone: "081295899313", role: "Gold" },
-    { id: "BS-CRM-007", name: "Rafif Nugraha", email: "rafif82@gmail.com", phone: "081252235350", role: "Classic" },
-    { id: "BS-CRM-008", name: "Zainal Lubis", email: "zainal84@gmail.com", phone: "081258586340", role: "Classic" },
-    { id: "BS-CRM-009", name: "Ilham Saputra", email: "ilham59@gmail.com", phone: "081289978790", role: "Classic" },
-    { id: "BS-CRM-010", name: "Dimas Kurniawan", email: "dimas65@gmail.com", phone: "081270897765", role: "VIP" },
-    { id: "BS-CRM-011", name: "Taufik Sanjaya", email: "taufik77@gmail.com", phone: "081290388981", role: "Classic" },
-    { id: "BS-CRM-012", name: "Budi Purnama", email: "budi72@gmail.com", phone: "081281498611", role: "Gold" },
-    { id: "BS-CRM-013", name: "Agus Harahap", email: "agus95@gmail.com", phone: "081260119651", role: "Classic" },
-    { id: "BS-CRM-014", name: "Ahmad Saputra", email: "ahmad90@gmail.com", phone: "081240728046", role: "Gold" },
-    { id: "BS-CRM-015", name: "Gilang Subagja", email: "gilang70@gmail.com", phone: "081235556386", role: "Gold" },
-    { id: "BS-CRM-016", name: "Ihsan Purnama", email: "ihsan53@gmail.com", phone: "081243374088", role: "Classic" },
-    { id: "BS-CRM-017", name: "Aditya Alatas", email: "aditya79@gmail.com", phone: "081222517517", role: "Classic" },
-    { id: "BS-CRM-018", name: "Dafa Zulkarnain", email: "dafa68@gmail.com", phone: "081266775103", role: "Gold" },
-    { id: "BS-CRM-019", name: "Dani Wijaya", email: "dani16@gmail.com", phone: "081273993471", role: "Classic" },
-    { id: "BS-CRM-020", name: "Dimas Wibowo", email: "dimas82@gmail.com", phone: "081287701200", role: "Gold" },
-    { id: "BS-CRM-021", name: "Gilang Setiawan", email: "gilang60@gmail.com", phone: "081296637649", role: "Classic" },
-    { id: "BS-CRM-022", name: "Taufik Nugraha", email: "taufik74@gmail.com", phone: "081227778019", role: "Gold" },
-    { id: "BS-CRM-023", name: "Vito Kurniawan", email: "vito94@gmail.com", phone: "081228024248", role: "Gold" },
-    { id: "BS-CRM-024", name: "Dafa Ginting", email: "dafa72@gmail.com", phone: "081216818112", role: "Classic" },
-    { id: "BS-CRM-025", name: "Vito Mahendra", email: "vito64@gmail.com", phone: "081211297845", role: "VIP" },
-    { id: "BS-CRM-026", name: "Agus Nasution", email: "agus15@gmail.com", phone: "081238195995", role: "Classic" },
-    { id: "BS-CRM-027", name: "Aldi Subagja", email: "aldi32@gmail.com", phone: "081213326769", role: "Gold" },
-    { id: "BS-CRM-028", name: "Rizky Utama", email: "rizky70@gmail.com", phone: "081236786211", role: "Classic" },
-    { id: "BS-CRM-029", name: "Rio Utama", email: "rio18@gmail.com", phone: "081247463522", role: "Classic" },
-    { id: "BS-CRM-030", name: "Zainal Setiawan", email: "zainal14@gmail.com", phone: "081290070438", role: "Gold" }
-  ]);
+  const [customers, setCustomers] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   // State bawaan UI
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -50,6 +20,23 @@ export default function Customers() {
   const [newClient, setNewClient] = useState({ name: "", email: "", phone: "" });
 
   useEffect(() => {
+    fetchCustomers();
+  }, []);
+
+  const fetchCustomers = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.from('customers_view').select('*').order('last_order_date', { ascending: false });
+      if (error) throw error;
+      setCustomers(data || []);
+    } catch (error) {
+      console.error("Error fetching customers:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     if (isModalOpen && nameInputRef.current) {
       setTimeout(() => {
         nameInputRef.current.focus();
@@ -57,26 +44,33 @@ export default function Customers() {
     }
   }, [isModalOpen]); 
 
-  // Fungsi Tambah Data (Berjalan di frontend tanpa Supabase)
-  const handleAddClient = (e) => {
+  // Fungsi Tambah Data
+  const handleAddClient = async (e) => {
     e.preventDefault();
-    if (!newClient.name.trim() || !newClient.phone.trim()) {
-      alert("Nama dan Nomor HP wajib diisi!");
+    if (!newClient.name.trim() || !newClient.email.trim()) {
+      alert("Nama dan Email wajib diisi!");
       return;
     }
 
-    const clientData = {
-      id: `BS-CRM-0${customers.length + 1}`,
-      name: newClient.name,
-      email: newClient.email || "-",
-      phone: newClient.phone,
-      role: "Classic" // Level membership default untuk pelanggan baru
-    };
-
-    setCustomers([clientData, ...customers]); // Tambahkan ke paling atas tabel
-    setIsModalOpen(false); // Tutup modal
-    setNewClient({ name: "", email: "", phone: "" }); // Kosongkan form
-    alert("Pelanggan baru berhasil ditambahkan!");
+    try {
+      // Kita insert ke tabel users
+      const { error } = await supabase.from('users').insert([{
+        name: newClient.name,
+        email: newClient.email,
+        password: "defaultpassword123", // dummy password
+        role: "customer"
+      }]);
+      
+      if (error) throw error;
+      
+      alert("Pelanggan baru berhasil ditambahkan!");
+      setIsModalOpen(false);
+      setNewClient({ name: "", email: "", phone: "" });
+      fetchCustomers();
+    } catch (error) {
+      console.error(error);
+      alert("Gagal menambahkan pelanggan: " + error.message);
+    }
   };
 
   // Fungsi Delete Data (Berjalan di frontend)
@@ -89,16 +83,17 @@ export default function Customers() {
     alert("Data berhasil dihapus!");
   };
 
-  // Penyesuaian Badge Membership (Berdasarkan CSV Anda: VIP, Gold, Classic)
+  // Penyesuaian Badge Membership
   const getBadgeType = (role) => {
-    if (role === 'VIP') return 'success'; // Hijau
-    if (role === 'Gold') return 'warning'; // Kuning
-    return 'secondary'; // Abu-abu
+    if (role?.includes('Platinum')) return 'success';
+    if (role?.includes('Gold')) return 'warning';
+    if (role?.includes('Silver')) return 'primary';
+    return 'secondary';
   };
 
   const getLoyaltyIcon = (role) => {
-    if (role === 'VIP') return <FaCrown className="text-yellow-500" />;
-    if (role === 'Gold') return <FaMedal className="text-amber-500" />;
+    if (role?.includes('Platinum')) return <FaCrown className="text-yellow-500" />;
+    if (role?.includes('Gold')) return <FaMedal className="text-amber-500" />;
     return <FaStar className="text-slate-400" />;
   };
 
@@ -151,55 +146,47 @@ export default function Customers() {
               </tr>
             </thead>
             <tbody>
-              {filteredCustomers.length === 0 ? (
-                <tr>
-                  <td colSpan="4" className="text-center py-12 text-slate-500 font-medium">
-                    Pelanggan tidak ditemukan.
-                  </td>
-                </tr>
+              {isLoading ? (
+                <tr><td colSpan="4" className="text-center py-10">Loading...</td></tr>
+              ) : filteredCustomers.length === 0 ? (
+                <tr><td colSpan="4" className="text-center py-10">No customers found.</td></tr>
               ) : (
-                filteredCustomers.map(cust => (
+                filteredCustomers.map((cust, index) => (
                   <tr 
-                    key={cust.id} 
-                    className="border-b border-gray-50 hover:bg-slate-50/80 transition-all duration-200 group relative"
+                    key={cust.email || index} 
+                    className="border-b border-gray-50 hover:bg-slate-50 transition-all duration-200 group relative"
                   >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="relative">
-                          <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold shadow-md uppercase ${
-                            cust.role === 'VIP' ? 'bg-gradient-to-br from-yellow-500 to-amber-600' : 
-                            cust.role === 'Gold' ? 'bg-gradient-to-br from-amber-300 to-yellow-500 text-slate-800' : 
-                            'bg-gradient-to-br from-slate-700 to-slate-800'
-                          }`}>
-                            {cust.name ? cust.name.charAt(0) : '?'}
-                          </div>
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center text-white font-bold shadow-sm">
+                          {(cust.name || 'G').charAt(0).toUpperCase()}
                         </div>
                         <div>
-                          <span className="font-bold text-slate-800 block">{cust.name}</span>
-                          <span className="text-[10px] font-bold tracking-widest text-slate-400">{cust.id}</span>
+                          <p className="font-bold text-slate-800">{cust.name || 'Guest'}</p>
+                          <p className="text-xs text-slate-500">{cust.email}</p>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-2 text-slate-600 font-medium text-sm mb-1">
-                        <FaPhoneAlt className="text-slate-400 text-xs" /> {cust.phone}
+                      <div className="flex items-center gap-2 text-slate-600">
+                        <FaPhoneAlt className="text-slate-400 text-xs" />
+                        <span className="text-sm font-medium">{cust.phone || '-'}</span>
                       </div>
-                      <div className="text-slate-400 text-xs">{cust.email}</div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <Badge type={getBadgeType(cust.role)}>
-                          <span className="flex items-center gap-1.5 uppercase text-[10px] font-black tracking-wider">
-                            {getLoyaltyIcon(cust.role)}
-                            {cust.role || 'Classic'}
+                      <div className="flex items-center gap-3">
+                        <Badge type={getBadgeType(cust.membership_level)}>
+                          <span className="flex items-center gap-1.5 font-bold">
+                            {getLoyaltyIcon(cust.membership_level)} {cust.membership_level}
                           </span>
                         </Badge>
+                        <span className="text-xs text-slate-400">{cust.total_orders} Orders</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4 relative">
                       <div className="flex justify-end">
                         <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors group/btn">
-                          <FaEllipsisV className="text-gray-400 group-hover/btn:text-slate-600 transition-colors" />
+                          <FaEllipsisV className="text-gray-400 group-hover/btn:text-slate-600" />
                         </button>
                         {/* Quick edit dropdown */}
                         <div className="absolute right-6 mt-8 w-40 bg-white rounded-xl shadow-xl border border-gray-100 py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">

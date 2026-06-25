@@ -1,42 +1,90 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PageHeader from "../components/PageHeader";
 import Button from "../components/Button";
 import Badge from "../components/Badge";
-import { FaSearch, FaFilter, FaFileDownload, FaEllipsisV, FaEye, FaEdit, FaTrash } from 'react-icons/fa';
-
-const ordersData = Array.from({ length: 30 }, (_, index) => {
-  const statuses = ['Completed', 'Pending', 'Cancelled'];
-  const services = [
-    { name: 'HairCut Signature', price: 75000 },
-    { name: 'Classic Shave', price: 35000 },
-    { name: 'Hair Coloring', price: 150000 },
-    { name: 'Gentleman Facial', price: 50000 },
-    { name: 'Beard Trim', price: 30000 }
-  ];
-  
-  const randomService = services[Math.floor(Math.random() * services.length)];
-  
-  return {
-    id: `ORD-${(index + 1).toString().padStart(4, '0')}`,
-    customerName: `Pelanggan ${index + 1}`,
-    service: randomService.name,
-    status: statuses[index % 3],
-    totalPrice: randomService.price,
-    orderDate: `2026-04-${(index % 28 + 1).toString().padStart(2, '0')}`,
-  };
-});
+import { FaSearch, FaFilter, FaFileDownload, FaEllipsisV, FaEye, FaEdit, FaTrash, FaCheckCircle } from 'react-icons/fa';
+import { supabase } from '../lib/supabaseClient';
 
 export default function Orders() {
+  const [orders, setOrders] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
 
-  const getStatusIcon = (status) => {
-    switch(status) {
-      case 'Completed': return '✅';
-      case 'Pending': return '⏳';
-      case 'Cancelled': return '❌';
-      default: return '📋';
+  useEffect(() => {
+    fetchOrders();
+  }, []);
+
+  const fetchOrders = async () => {
+    setIsLoading(true);
+    try {
+      const { data: bookings, error: err1 } = await supabase.from('haircut_bookings').select('*');
+      const { data: products, error: err2 } = await supabase.from('product_orders').select('*');
+
+      let combined = [];
+      if (!err1 && bookings) {
+        combined = [...combined, ...bookings.map(b => ({
+          id: b.id.substring(0,8).toUpperCase(),
+          realId: b.id,
+          customerName: b.name || 'Guest',
+          service: `[Booking] ${b.layanan || b.service}`,
+          status: b.status || 'Pending',
+          totalPrice: b.harga || 75000,
+          orderDate: b.tanggal ? b.tanggal : b.created_at.substring(0,10),
+          type: 'booking'
+        }))];
+      }
+      if (!err2 && products) {
+        combined = [...combined, ...products.map(p => ({
+          id: p.id.substring(0,8).toUpperCase(),
+          realId: p.id,
+          customerName: p.buyer_name || p.email || 'Guest',
+          service: `[Produk] ${p.items}`,
+          status: p.status || 'Pending',
+          totalPrice: p.total_harga || 0,
+          orderDate: p.created_at.substring(0,10),
+          type: 'product'
+        }))];
+      }
+
+      combined.sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate));
+      setOrders(combined);
+    } catch (error) {
+      console.error("Error fetching orders:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
+
+  const getStatusIcon = (status) => {
+    if (!status) return '📋';
+    if (status.includes('Selesai') || status === 'Completed' || status.includes('Dikirim')) return '✅';
+    if (status.includes('Menunggu') || status === 'Pending') return '⏳';
+    if (status.includes('Batal') || status.includes('Dibatalkan') || status === 'Cancelled') return '❌';
+    return '📋';
+  };
+
+  const handleMarkAsCompleted = async (order) => {
+    if (!window.confirm(`Tandai pesanan ${order.id} sebagai Selesai?`)) return;
+    try {
+      const targetTable = order.type === 'booking' ? 'haircut_bookings' : 'product_orders';
+      const { error } = await supabase
+        .from(targetTable)
+        .update({ status: 'Selesai' })
+        .eq('id', order.realId);
+        
+      if (error) throw error;
+      
+      setOrders(prev => prev.map(o => o.realId === order.realId ? { ...o, status: 'Selesai' } : o));
+    } catch (err) {
+      console.error("Error updating status:", err);
+      alert('Gagal mengupdate status pesanan');
+    }
+  };
+
+  const filteredOrders = orders.filter(o => 
+    o.customerName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    o.id.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="flex-1 w-full pb-10 bg-gradient-to-br from-gray-50 to-slate-100 min-h-screen p-4 md:p-8">
@@ -67,7 +115,7 @@ export default function Orders() {
               <FaFilter className="text-gray-500" /> Filter
             </Button>
             <div className="flex items-center text-sm text-gray-500 bg-gray-50 px-4 py-2 rounded-2xl">
-              <span className="font-medium">30</span> orders
+              <span className="font-medium">{filteredOrders.length}</span> orders
             </div>
           </div>
         </div>
@@ -86,61 +134,69 @@ export default function Orders() {
               </tr>
             </thead>
             <tbody>
-              {ordersData.map((order) => (
-                <tr 
-                  key={order.id} 
-                  className="border-b border-gray-50 hover:bg-slate-50 transition-all duration-200 group relative"
-                >
-                  <td className="px-6 py-4 font-mono text-sm font-semibold text-slate-700">
-                    {order.id}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center text-white text-xs font-bold shadow-sm">
-                        {order.customerName.charAt(0)}
+              {isLoading ? (
+                <tr><td colSpan="7" className="text-center py-10">Loading...</td></tr>
+              ) : filteredOrders.length === 0 ? (
+                <tr><td colSpan="7" className="text-center py-10">No orders found.</td></tr>
+              ) : (
+                filteredOrders.map((order) => (
+                  <tr 
+                    key={order.realId} 
+                    className="border-b border-gray-50 hover:bg-slate-50 transition-all duration-200 group relative"
+                  >
+                    <td className="px-6 py-4 font-mono text-sm font-semibold text-slate-700">
+                      {order.id}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center text-white text-xs font-bold shadow-sm">
+                          {order.customerName.charAt(0).toUpperCase()}
+                        </div>
+                        <span className="font-medium text-slate-700">{order.customerName}</span>
                       </div>
-                      <span className="font-medium text-slate-700">{order.customerName}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-slate-600">{order.service}</td>
-                  <td className="px-6 py-4 text-slate-500 text-sm">{order.orderDate}</td>
-                  <td className="px-6 py-4 font-bold text-slate-800">
-                    Rp {order.totalPrice.toLocaleString()}
-                  </td>
-                  <td className="px-6 py-4">
-                    <Badge 
-                      type={
-                        order.status === 'Completed' ? 'success' : 
-                        order.status === 'Pending' ? 'warning' : 'danger'
-                      }
-                    >
-                      <span className="flex items-center gap-1.5">
-                        <span>{getStatusIcon(order.status)}</span>
-                        {order.status}
-                      </span>
-                    </Badge>
-                  </td>
-                  <td className="px-6 py-4 relative">
-                    <div className="flex justify-end">
-                      <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors group/btn">
-                        <FaEllipsisV className="text-gray-400 group-hover/btn:text-slate-600 transition-colors" />
-                      </button>
-                      {/* Dropdown aksi */}
-                      <div className="absolute right-0 top-12 mt-1 w-44 bg-white rounded-xl shadow-xl border border-gray-100 py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
-                        <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-slate-50 flex items-center gap-2">
-                          <FaEye className="text-gray-400" /> View Details
+                    </td>
+                    <td className="px-6 py-4 text-slate-600 truncate max-w-[200px]">{order.service}</td>
+                    <td className="px-6 py-4 text-slate-500 text-sm">{order.orderDate}</td>
+                    <td className="px-6 py-4 font-bold text-slate-800">
+                      Rp {Number(order.totalPrice).toLocaleString('id-ID')}
+                    </td>
+                    <td className="px-6 py-4">
+                      <Badge 
+                        type={
+                          (!order.status) ? 'warning' :
+                          (order.status.includes('Selesai') || order.status === 'Completed' || order.status.includes('Dikirim')) ? 'success' : 
+                          (order.status.includes('Menunggu') || order.status === 'Pending' || order.status === 'Diproses') ? 'warning' : 'danger'
+                        }
+                      >
+                        <span className="flex items-center gap-1.5">
+                          <span>{getStatusIcon(order.status)}</span>
+                          {order.status}
+                        </span>
+                      </Badge>
+                    </td>
+                    <td className="px-6 py-4 relative">
+                      <div className="flex justify-end">
+                        <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors group/btn">
+                          <FaEllipsisV className="text-gray-400 group-hover/btn:text-slate-600 transition-colors" />
                         </button>
-                        <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-slate-50 flex items-center gap-2">
-                          <FaEdit className="text-gray-400" /> Edit Order
-                        </button>
-                        <button className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2">
-                          <FaTrash className="text-red-400" /> Cancel Order
-                        </button>
+                        <div className="absolute right-0 top-12 mt-1 w-44 bg-white rounded-xl shadow-xl border border-gray-100 py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+                          <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-slate-50 flex items-center gap-2">
+                            <FaEye className="text-gray-400" /> View Details
+                          </button>
+                          {order.status && !order.status.includes('Selesai') && !order.status.includes('Batal') && !order.status.includes('Dibatalkan') && (
+                            <button 
+                              onClick={() => handleMarkAsCompleted(order)}
+                              className="w-full text-left px-4 py-2 text-sm text-emerald-600 hover:bg-emerald-50 flex items-center gap-2"
+                            >
+                              <FaCheckCircle className="text-emerald-500" /> Tandai Selesai
+                            </button>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

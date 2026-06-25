@@ -24,6 +24,7 @@ const Promo = React.lazy(() => import("./pages/Promo"));
 
 // IMPORT HALAMAN MEMBER BARU
 const LoginMember = React.lazy(() => import("./pages/LoginMember")); 
+const RegisterMember = React.lazy(() => import("./pages/RegisterMember"));
 const MemberDashboard = React.lazy(() => import("./pages/MemberDashboard"));
 const Booking = React.lazy(() => import("./pages/Booking"));
 
@@ -36,6 +37,7 @@ function App() {
         
         {/* RUTE HALAMAN MEMBER & BOOKING (Berdiri Sendiri / Full Screen) */}
         <Route path="/login-member" element={<LoginMember />} />
+        <Route path="/register-member" element={<RegisterMember />} />
         <Route path="/member-dashboard" element={<MemberDashboard />} />
         <Route path="/booking" element={<Booking />} /> {/* <-- DIPINDAH KE SINI */}
 

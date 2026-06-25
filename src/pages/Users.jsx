@@ -5,7 +5,7 @@ import Modal from "../components/Modal";
 import InputField from "../components/InputField";
 import Button from "../components/Button";
 import { FaCrown, FaUser, FaUserEdit, FaTrashAlt, FaEnvelope, FaIdCard } from 'react-icons/fa';
-import { usersAPI } from '../services/usersAPI';
+import { supabase } from '../lib/supabaseClient';
 
 export default function Users() {
   const [users, setUsers] = useState([]);
@@ -23,7 +23,8 @@ export default function Users() {
   const loadUsers = async () => {
     setIsLoading(true);
     try {
-      const data = await usersAPI.fetchUsers();
+      const { data, error } = await supabase.from('users').select('*');
+      if (error) throw error;
    
       const sortedData = (data || []).sort((a, b) => {
         if (a.role === 'admin' && b.role !== 'admin') return -1;
@@ -42,7 +43,8 @@ export default function Users() {
     if (!window.confirm(`Yakin ingin menghapus akun ${name}?`)) return;
     setIsLoading(true);
     try {
-      await usersAPI.deleteUser(id);
+      const { error } = await supabase.from('users').delete().eq('id', id);
+      if (error) throw error;
       loadUsers();
     } catch (error) {
       alert("Gagal menghapus user: " + error.message);
@@ -68,11 +70,13 @@ export default function Users() {
     
     setIsSaving(true);
     try {
-      // Kita hanya mengirimkan data yang boleh diedit (misal: nama dan role)
-      await usersAPI.updateUser(editData.id, { 
+      const { error } = await supabase.from('users').update({ 
         name: editData.name, 
         role: editData.role 
-      });
+      }).eq('id', editData.id);
+      
+      if (error) throw error;
+      
       setIsModalOpen(false);
       loadUsers(); // Refresh tabel
     } catch (error) {
