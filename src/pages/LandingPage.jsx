@@ -9,6 +9,7 @@ import {
   FaShieldAlt, FaSmile, FaClock, FaMapMarkerAlt, FaPhone, FaEnvelope,
   FaShoppingCart, FaGift, FaPercentage, FaFire, FaGem, FaRocket, FaPaperPlane
 } from 'react-icons/fa';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 // ============ CUSTOM HOOKS ============
 const useCountUp = (end, duration = 2000, startCounting = false) => {
@@ -311,6 +312,7 @@ export default function LandingPage() {
   const [activeTestimonial, setActiveTestimonial] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
+  const [selectedService, setSelectedService] = useState(null);
   
   // State untuk form kontak (Simulasi Proses Kirim Pesan)
   const [contactStatus, setContactStatus] = useState('idle'); // 'idle' | 'submitting' | 'success'
@@ -444,6 +446,12 @@ export default function LandingPage() {
               <a 
                 key={item.label}
                 href={item.href} 
+                onClick={(e) => {
+                  e.preventDefault();
+                  const targetId = item.href.substring(1);
+                  const elem = document.getElementById(targetId);
+                  if (elem) elem.scrollIntoView({ behavior: 'smooth' });
+                }}
                 className="relative py-2 group"
               >
                 <span className={`transition-colors duration-300 ${isScrolled ? 'group-hover:text-black' : 'group-hover:text-white'}`}>
@@ -502,7 +510,13 @@ export default function LandingPage() {
                 <a 
                   key={item.label}
                   href={item.href} 
-                  onClick={() => setIsMobileMenuOpen(false)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    const targetId = item.href.substring(1);
+                    const elem = document.getElementById(targetId);
+                    if (elem) elem.scrollIntoView({ behavior: 'smooth' });
+                    setIsMobileMenuOpen(false);
+                  }}
                   className="px-6 py-4 text-sm font-bold text-gray-600 uppercase tracking-widest hover:text-black hover:bg-gray-100 rounded-2xl transition-all duration-200"
                 >
                   {item.label}
@@ -672,8 +686,14 @@ export default function LandingPage() {
                     <h3 className={`text-xl font-bold mb-3 ${service.featured ? 'text-white' : 'text-gray-900'}`}>{service.title}</h3>
                     <p className={`text-sm leading-relaxed mb-4 flex-grow ${service.featured ? 'text-gray-400' : 'text-gray-500'}`}>{service.desc}</p>
                     <div className="flex items-center gap-2 text-xs text-gray-400 mb-5"><FaClock /><span>{service.duration}</span></div>
-                    <div className={`pt-4 border-t mt-auto ${service.featured ? 'border-gray-800' : 'border-gray-100'}`}>
+                    <div className={`pt-4 border-t mt-auto flex flex-col gap-4 ${service.featured ? 'border-gray-800' : 'border-gray-100'}`}>
                       <span className={`font-black text-2xl ${service.featured ? 'text-white' : 'text-gray-900'}`}>{service.price}</span>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); setSelectedService(service); }} 
+                        className={`w-full py-3 text-sm font-bold rounded-xl transition-all duration-300 hover:scale-[1.02] shadow-md flex items-center justify-center gap-2 ${service.featured ? 'bg-white text-black hover:bg-gray-200' : 'bg-gray-900 text-white hover:bg-black'}`}
+                      >
+                        Lihat Detail
+                      </button>
                     </div>
                   </div>
                 </TiltCard>
@@ -682,6 +702,42 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* MODAL LAYANAN */}
+      <Dialog open={!!selectedService} onOpenChange={(open) => !open && setSelectedService(null)}>
+        <DialogContent className="bg-gray-900 text-white border-gray-800 sm:max-w-md rounded-2xl sm:rounded-3xl p-6 sm:p-8">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-black mb-2">{selectedService?.title}</DialogTitle>
+            <DialogDescription className="text-gray-400 text-sm leading-relaxed">
+              {selectedService?.desc}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="flex flex-col gap-4 mt-6">
+            <div className="flex justify-between items-center bg-gray-800/50 p-4 rounded-xl border border-gray-700">
+              <div className="flex items-center gap-2 text-gray-300">
+                <FaClock className="text-gray-500" /> 
+                <span className="text-sm font-medium">Estimasi Waktu</span>
+              </div>
+              <span className="font-bold">{selectedService?.duration}</span>
+            </div>
+            
+            <div className="flex justify-between items-center bg-gray-800/50 p-4 rounded-xl border border-gray-700">
+              <div className="flex items-center gap-2 text-gray-300">
+                <FaCut className="text-gray-500" /> 
+                <span className="text-sm font-medium">Harga Layanan</span>
+              </div>
+              <span className="font-black text-lg">{selectedService?.price}</span>
+            </div>
+          </div>
+          
+          <div className="mt-8 flex gap-3">
+            <Link to="/booking" className="flex-1 bg-white text-black font-bold py-3.5 rounded-xl hover:bg-gray-200 transition-colors flex items-center justify-center gap-2">
+              Booking Sekarang <FaArrowRight className="text-xs" />
+            </Link>
+          </div>
+        </DialogContent>
+      </Dialog>
 
     {/* ============ STYLE SECTION (Animasi Vertical Marquee) ============ */}
       <section id="styles" className="py-20 md:py-32 px-4 md:px-12 bg-white relative border-t border-gray-100 overflow-hidden">
