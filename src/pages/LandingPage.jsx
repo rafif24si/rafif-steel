@@ -451,6 +451,8 @@ export default function LandingPage() {
       setBuyerEmail(savedEmail);
       setBookingWa(savedEmail);
       setUserSession(savedEmail);
+    } else {
+      setUserSession(null);
     }
     
     return () => window.removeEventListener('scroll', handleScroll);
@@ -724,11 +726,11 @@ export default function LandingPage() {
 
   const menuLinks = [
     { href: "#about", label: "Tentang" },
-    { href: "#services", label: "Layanan" },
     { href: "#styles", label: "Style" },
+    { href: "#services", label: "Layanan" },
     { href: "#products", label: "Produk" },
-    { href: "#vouchers", label: "Promo" },
     { href: "#kapsters", label: "Kapster" },
+    { href: "#vouchers", label: "Promo" },
     { href: "#contact", label: "Status" },
     { href: "#reviews", label: "Ulasan" }
   ];
@@ -848,14 +850,14 @@ export default function LandingPage() {
          <div className="flex items-center gap-3 z-50">
             {/* Tombol Login Member (Ditambahkan) */}
             <Link 
-              to="/login-member" 
+              to={userSession ? "/member-dashboard" : "/login-member"} 
               className={`hidden lg:inline-flex items-center gap-2 px-6 py-2.5 text-xs font-bold rounded-full transition-all duration-500 ease-out hover:-translate-y-0.5 shadow-lg ${
                 isScrolled 
                   ? 'bg-black text-white hover:bg-gray-800' 
                   : 'bg-white text-black hover:bg-gray-200'
               }`}
             >
-              <span>Member</span>
+              <span>{userSession ? 'Dashboard' : 'Member'}</span>
               <FaUserTie className="text-[10px]" />
             </Link>
 
@@ -907,11 +909,11 @@ export default function LandingPage() {
               ))}
               <div className="px-2 pt-4 mt-2 border-t border-gray-200 flex flex-col gap-3">
                 <Link 
-                  to="/login-member"
+                  to={userSession ? "/member-dashboard" : "/login-member"}
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="flex items-center justify-center gap-2 w-full bg-black text-white font-bold py-4 rounded-2xl shadow-lg hover:bg-gray-800 transition-colors duration-300"
                 >
-                  <FaUserTie className="text-sm" /> Login Member
+                  <FaUserTie className="text-sm" /> {userSession ? 'Dashboard Member' : 'Login Member'}
                 </Link>
                 <Link 
                   to="/login"
@@ -1039,6 +1041,151 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+    {/* ============ STYLE SECTION (Animasi Vertical Marquee) ============ */}
+      <section id="styles" className="py-20 md:py-32 px-4 md:px-12 bg-white relative border-t border-gray-100 overflow-hidden">
+        
+     {/* CSS Khusus untuk Animasi Marquee */}
+        <style>{`
+          @keyframes marqueeUp {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-50%); }
+          }
+          @keyframes marqueeDown {
+            0% { transform: translateY(-50%); }
+            100% { transform: translateY(0); }
+          }
+          
+          /* WAKTU DIPERCEPAT MENJADI 15s (sebelumnya 30s) */
+          .animate-marquee-up {
+            animation: marqueeUp 10s linear infinite; 
+          }
+          .animate-marquee-down {
+            animation: marqueeDown 10s linear infinite;
+          }
+
+          /* Pause animasi saat di hover (Opsional, agar user bisa melihat detail) */
+          .pause-marquee:hover .animate-marquee-up,
+          .pause-marquee:hover .animate-marquee-down {
+            animation-play-state: paused;
+          }
+        `}</style>
+
+        <div className="max-w-7xl mx-auto">
+          <FadeInSection delay={0}>
+            <div className="text-center mb-12 md:mb-16">
+              <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 text-gray-700 font-bold rounded-full text-[10px] md:text-xs tracking-widest uppercase mb-4">
+                <FaStar className="text-yellow-500" /> Inspiration
+              </span>
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-gray-900 tracking-tight mb-4">
+                Model Rambut <span className="text-transparent bg-clip-text bg-gradient-to-r from-gray-500 to-gray-800">Pria</span>
+              </h2>
+              <p className="text-gray-500 text-base md:text-lg max-w-2xl mx-auto">
+                Temukan gaya rambut yang paling sesuai dengan karakter dan bentuk wajah Anda.
+              </p>
+            </div>
+          </FadeInSection>
+
+          {/* Area Scrolling Marquee */}
+          <FadeInSection delay={100}>
+            {/* Menggunakan flex dan height tetap agar gambar bisa scroll di dalamnya */}
+            <div className="flex gap-4 md:gap-6 h-[500px] md:h-[700px] overflow-hidden pause-marquee relative">
+              
+              {/* Efek Gradasi Putih Atas & Bawah agar scroll terlihat lebih smooth */}
+              <div className="absolute top-0 left-0 right-0 h-20 bg-gradient-to-b from-white to-transparent z-10 pointer-events-none"></div>
+              <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-white to-transparent z-10 pointer-events-none"></div>
+
+              {/* Kolom 1 (Bergerak ke Atas) */}
+              <div className="flex-1 flex flex-col gap-4 md:gap-6 animate-marquee-up">
+                {/* Kita render 2 kali (asli & duplikat) agar scroll tidak pernah putus */}
+                {[...hairStyles.slice(0, 4), ...hairStyles.slice(0, 4)].map((style, idx) => (
+                  <div key={idx} className="w-full">
+                    <TiltCard maxTilt={5}>
+                      <div className="group relative rounded-2xl overflow-hidden aspect-[4/5] bg-gray-100 cursor-pointer shadow-sm">
+                        <img src={style.img} alt={style.name} className="w-full h-full object-cover" loading="lazy" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                        <div className="absolute inset-0 p-4 flex flex-col justify-end opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-4 group-hover:translate-y-0">
+                          <h3 className="text-white font-bold text-lg md:text-xl leading-tight">{style.name}</h3>
+                        </div>
+                      </div>
+                    </TiltCard>
+                  </div>
+                ))}
+              </div>
+
+              {/* Kolom 2 (Bergerak ke Bawah) */}
+              <div className="flex-1 flex flex-col gap-4 md:gap-6 animate-marquee-down">
+                {[...hairStyles.slice(4, 8), ...hairStyles.slice(4, 8)].map((style, idx) => (
+                  <div key={idx} className="w-full">
+                    <TiltCard maxTilt={5}>
+                      <div className="group relative rounded-2xl overflow-hidden aspect-[3/4] bg-gray-100 cursor-pointer shadow-sm">
+                        <img src={style.img} alt={style.name} className="w-full h-full object-cover" loading="lazy" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <div className="absolute inset-0 p-4 flex flex-col justify-end opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-4 group-hover:translate-y-0">
+                          <h3 className="text-white font-bold text-lg md:text-xl leading-tight">{style.name}</h3>
+                        </div>
+                      </div>
+                    </TiltCard>
+                  </div>
+                ))}
+              </div>
+
+              {/* Kolom 3 (Bergerak ke Atas) - Disembunyikan di Mobile kecil */}
+              <div className="hidden sm:flex flex-1 flex-col gap-4 md:gap-6 animate-marquee-up">
+                {[...hairStyles.slice(8, 12), ...hairStyles.slice(8, 12)].map((style, idx) => (
+                  <div key={idx} className="w-full">
+                    <TiltCard maxTilt={5}>
+                      <div className="group relative rounded-2xl overflow-hidden aspect-[4/5] bg-gray-100 cursor-pointer shadow-sm">
+                        <img src={style.img} alt={style.name} className="w-full h-full object-cover" loading="lazy" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <div className="absolute inset-0 p-4 flex flex-col justify-end opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-4 group-hover:translate-y-0">
+                          <h3 className="text-white font-bold text-lg md:text-xl leading-tight">{style.name}</h3>
+                        </div>
+                      </div>
+                    </TiltCard>
+                  </div>
+                ))}
+              </div>
+
+              {/* Kolom 4 (Bergerak ke Bawah) - Disembunyikan di Tablet ke bawah */}
+              <div className="hidden md:flex flex-1 flex-col gap-4 md:gap-6 animate-marquee-down">
+                {[...hairStyles.slice(12, 16), ...hairStyles.slice(12, 16)].map((style, idx) => (
+                  <div key={idx} className="w-full">
+                    <TiltCard maxTilt={5}>
+                      <div className="group relative rounded-2xl overflow-hidden aspect-[3/4] bg-gray-100 cursor-pointer shadow-sm">
+                        <img src={style.img} alt={style.name} className="w-full h-full object-cover" loading="lazy" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <div className="absolute inset-0 p-4 flex flex-col justify-end opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-4 group-hover:translate-y-0">
+                          <h3 className="text-white font-bold text-lg md:text-xl leading-tight">{style.name}</h3>
+                        </div>
+                      </div>
+                    </TiltCard>
+                  </div>
+                ))}
+              </div>
+
+              {/* Kolom 5 (Bergerak ke Atas) - Hanya muncul di Desktop Besar */}
+              <div className="hidden lg:flex flex-1 flex-col gap-4 md:gap-6 animate-marquee-up">
+                {[...hairStyles.slice(16, 20), ...hairStyles.slice(16, 20)].map((style, idx) => (
+                  <div key={idx} className="w-full">
+                    <TiltCard maxTilt={5}>
+                      <div className="group relative rounded-2xl overflow-hidden aspect-[4/5] bg-gray-100 cursor-pointer shadow-sm">
+                        <img src={style.img} alt={style.name} className="w-full h-full object-cover" loading="lazy" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <div className="absolute inset-0 p-4 flex flex-col justify-end opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-4 group-hover:translate-y-0">
+                          <h3 className="text-white font-bold text-lg md:text-xl leading-tight">{style.name}</h3>
+                        </div>
+                      </div>
+                    </TiltCard>
+                  </div>
+                ))}
+              </div>
+
+            </div>
+          </FadeInSection>
+        </div>
+      </section>
+         
 
       {/* ============ SERVICES SECTION ============ */}
       <section id="services" className="py-20 md:py-32 px-4 md:px-12 bg-gray-50 relative">
@@ -1200,311 +1347,6 @@ export default function LandingPage() {
           </div>
         </DialogContent>
       </Dialog>
-
-    {/* ============ STYLE SECTION (Animasi Vertical Marquee) ============ */}
-      <section id="styles" className="py-20 md:py-32 px-4 md:px-12 bg-white relative border-t border-gray-100 overflow-hidden">
-        
-     {/* CSS Khusus untuk Animasi Marquee */}
-        <style>{`
-          @keyframes marqueeUp {
-            0% { transform: translateY(0); }
-            100% { transform: translateY(-50%); }
-          }
-          @keyframes marqueeDown {
-            0% { transform: translateY(-50%); }
-            100% { transform: translateY(0); }
-          }
-          
-          /* WAKTU DIPERCEPAT MENJADI 15s (sebelumnya 30s) */
-          .animate-marquee-up {
-            animation: marqueeUp 10s linear infinite; 
-          }
-          .animate-marquee-down {
-            animation: marqueeDown 10s linear infinite;
-          }
-
-          /* Pause animasi saat di hover (Opsional, agar user bisa melihat detail) */
-          .pause-marquee:hover .animate-marquee-up,
-          .pause-marquee:hover .animate-marquee-down {
-            animation-play-state: paused;
-          }
-        `}</style>
-
-        <div className="max-w-7xl mx-auto">
-          <FadeInSection delay={0}>
-            <div className="text-center mb-12 md:mb-16">
-              <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 text-gray-700 font-bold rounded-full text-[10px] md:text-xs tracking-widest uppercase mb-4">
-                <FaStar className="text-yellow-500" /> Inspiration
-              </span>
-              <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-gray-900 tracking-tight mb-4">
-                Model Rambut <span className="text-transparent bg-clip-text bg-gradient-to-r from-gray-500 to-gray-800">Pria</span>
-              </h2>
-              <p className="text-gray-500 text-base md:text-lg max-w-2xl mx-auto">
-                Temukan gaya rambut yang paling sesuai dengan karakter dan bentuk wajah Anda.
-              </p>
-            </div>
-          </FadeInSection>
-
-          {/* Area Scrolling Marquee */}
-          <FadeInSection delay={100}>
-            {/* Menggunakan flex dan height tetap agar gambar bisa scroll di dalamnya */}
-            <div className="flex gap-4 md:gap-6 h-[500px] md:h-[700px] overflow-hidden pause-marquee relative">
-              
-              {/* Efek Gradasi Putih Atas & Bawah agar scroll terlihat lebih smooth */}
-              <div className="absolute top-0 left-0 right-0 h-20 bg-gradient-to-b from-white to-transparent z-10 pointer-events-none"></div>
-              <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-white to-transparent z-10 pointer-events-none"></div>
-
-              {/* Kolom 1 (Bergerak ke Atas) */}
-              <div className="flex-1 flex flex-col gap-4 md:gap-6 animate-marquee-up">
-                {/* Kita render 2 kali (asli & duplikat) agar scroll tidak pernah putus */}
-                {[...hairStyles.slice(0, 4), ...hairStyles.slice(0, 4)].map((style, idx) => (
-                  <div key={idx} className="w-full">
-                    <TiltCard maxTilt={5}>
-                      <div className="group relative rounded-2xl overflow-hidden aspect-[4/5] bg-gray-100 cursor-pointer shadow-sm">
-                        <img src={style.img} alt={style.name} className="w-full h-full object-cover" loading="lazy" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                        <div className="absolute inset-0 p-4 flex flex-col justify-end opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-4 group-hover:translate-y-0">
-                          <h3 className="text-white font-bold text-lg md:text-xl leading-tight">{style.name}</h3>
-                        </div>
-                      </div>
-                    </TiltCard>
-                  </div>
-                ))}
-              </div>
-
-              {/* Kolom 2 (Bergerak ke Bawah) */}
-              <div className="flex-1 flex flex-col gap-4 md:gap-6 animate-marquee-down">
-                {[...hairStyles.slice(4, 8), ...hairStyles.slice(4, 8)].map((style, idx) => (
-                  <div key={idx} className="w-full">
-                    <TiltCard maxTilt={5}>
-                      <div className="group relative rounded-2xl overflow-hidden aspect-[3/4] bg-gray-100 cursor-pointer shadow-sm">
-                        <img src={style.img} alt={style.name} className="w-full h-full object-cover" loading="lazy" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                        <div className="absolute inset-0 p-4 flex flex-col justify-end opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-4 group-hover:translate-y-0">
-                          <h3 className="text-white font-bold text-lg md:text-xl leading-tight">{style.name}</h3>
-                        </div>
-                      </div>
-                    </TiltCard>
-                  </div>
-                ))}
-              </div>
-
-              {/* Kolom 3 (Bergerak ke Atas) - Disembunyikan di Mobile kecil */}
-              <div className="hidden sm:flex flex-1 flex-col gap-4 md:gap-6 animate-marquee-up">
-                {[...hairStyles.slice(8, 12), ...hairStyles.slice(8, 12)].map((style, idx) => (
-                  <div key={idx} className="w-full">
-                    <TiltCard maxTilt={5}>
-                      <div className="group relative rounded-2xl overflow-hidden aspect-[4/5] bg-gray-100 cursor-pointer shadow-sm">
-                        <img src={style.img} alt={style.name} className="w-full h-full object-cover" loading="lazy" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                        <div className="absolute inset-0 p-4 flex flex-col justify-end opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-4 group-hover:translate-y-0">
-                          <h3 className="text-white font-bold text-lg md:text-xl leading-tight">{style.name}</h3>
-                        </div>
-                      </div>
-                    </TiltCard>
-                  </div>
-                ))}
-              </div>
-
-              {/* Kolom 4 (Bergerak ke Bawah) - Disembunyikan di Tablet ke bawah */}
-              <div className="hidden md:flex flex-1 flex-col gap-4 md:gap-6 animate-marquee-down">
-                {[...hairStyles.slice(12, 16), ...hairStyles.slice(12, 16)].map((style, idx) => (
-                  <div key={idx} className="w-full">
-                    <TiltCard maxTilt={5}>
-                      <div className="group relative rounded-2xl overflow-hidden aspect-[3/4] bg-gray-100 cursor-pointer shadow-sm">
-                        <img src={style.img} alt={style.name} className="w-full h-full object-cover" loading="lazy" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                        <div className="absolute inset-0 p-4 flex flex-col justify-end opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-4 group-hover:translate-y-0">
-                          <h3 className="text-white font-bold text-lg md:text-xl leading-tight">{style.name}</h3>
-                        </div>
-                      </div>
-                    </TiltCard>
-                  </div>
-                ))}
-              </div>
-
-              {/* Kolom 5 (Bergerak ke Atas) - Hanya muncul di Desktop Besar */}
-              <div className="hidden lg:flex flex-1 flex-col gap-4 md:gap-6 animate-marquee-up">
-                {[...hairStyles.slice(16, 20), ...hairStyles.slice(16, 20)].map((style, idx) => (
-                  <div key={idx} className="w-full">
-                    <TiltCard maxTilt={5}>
-                      <div className="group relative rounded-2xl overflow-hidden aspect-[4/5] bg-gray-100 cursor-pointer shadow-sm">
-                        <img src={style.img} alt={style.name} className="w-full h-full object-cover" loading="lazy" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                        <div className="absolute inset-0 p-4 flex flex-col justify-end opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-4 group-hover:translate-y-0">
-                          <h3 className="text-white font-bold text-lg md:text-xl leading-tight">{style.name}</h3>
-                        </div>
-                      </div>
-                    </TiltCard>
-                  </div>
-                ))}
-              </div>
-
-            </div>
-          </FadeInSection>
-        </div>
-      </section>
-         
-
-      {/* ============ PROMO SECTION ============ */}
-
-
-
-      <section id="vouchers" className="py-20 md:py-28 px-4 md:px-12 bg-zinc-800 relative overflow-hidden border-t border-zinc-700">
-
-
-
-        <div className="absolute inset-0 opacity-10">
-
-
-
-          <div className="absolute inset-0" style={{ backgroundImage: `radial-gradient(circle at 20% 50%, white 1px, transparent 1px), radial-gradient(circle at 80% 50%, white 1px, transparent 1px)`, backgroundSize: '40px 40px' }} />
-
-
-
-        </div>
-
-
-
-        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-12 lg:gap-16 relative z-10">
-
-
-
-          <div className="w-full lg:w-1/2 text-white text-center lg:text-left">
-
-
-
-            <FadeInSection delay={0} direction="left">
-
-
-
-              <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/10 backdrop-blur-xl rounded-full text-[10px] md:text-xs font-bold tracking-widest uppercase mb-4 md:mb-6 border border-white/20">
-
-
-
-                <FaGift className="text-yellow-400" /> Promo Eksklusif
-
-
-
-              </span>
-
-
-
-              <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tight mb-4 md:mb-6 leading-[1.15]">
-
-
-
-                Klaim Voucher <br className="hidden md:block"/>Spesial Anda!
-
-
-
-              </h2>
-
-
-
-              <p className="text-gray-300 text-base md:text-lg mb-8 max-w-lg mx-auto lg:mx-0 leading-relaxed">
-
-
-
-                Daftar sebagai member HairCut sekarang dan nikmati diskon kunjungan pertama serta potongan harga produk eksklusif.
-
-
-
-              </p>
-
-
-
-              <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
-
-
-
-                <Link to="/register" className="px-6 py-3.5 bg-white text-black font-bold rounded-full hover:bg-gray-200 transition-all duration-200 hover:-translate-y-1 shadow-xl text-sm flex items-center justify-center gap-2">
-
-
-
-                  <FaRocket className="text-gray-800" /> Daftar & Klaim <FaArrowRight className="text-xs" />
-
-
-
-                </Link>
-
-
-
-                <button className="px-6 py-3.5 border-2 border-white/30 text-white font-bold rounded-full hover:bg-white/10 transition-all duration-200 hover:-translate-y-1 text-sm flex items-center justify-center gap-2">
-
-
-
-                  <FaPercentage /> Lihat Semua Promo
-
-
-
-                </button>
-
-
-
-              </div>
-
-
-
-            </FadeInSection>
-
-
-
-          </div>
-
-
-
-          <div className="w-full lg:w-1/2 flex flex-col gap-4 md:gap-5">
-            {isLoadingDynamic ? (
-              <div className="col-span-full text-center py-10 font-bold text-white">Loading Promos...</div>
-            ) : dynamicPromos.map((promo, idx) => {
-              const colors = [
-                { color: "yellow", borderColor: "border-yellow-400", dotColor: "bg-yellow-400" },
-                { color: "emerald", borderColor: "border-emerald-400", dotColor: "bg-emerald-400" },
-                { color: "blue", borderColor: "border-blue-400", dotColor: "bg-blue-400" },
-                { color: "purple", borderColor: "border-purple-400", dotColor: "bg-purple-400" },
-              ];
-              const style = colors[idx % colors.length];
-              
-              return (
-                <FadeInSection delay={idx * 150} direction="right" key={idx} duration={500}>
-                  <TiltCard maxTilt={3}>
-                    <div className={`bg-white rounded-2xl md:rounded-3xl p-5 md:p-7 flex items-center justify-between border-l-[10px] md:border-l-[14px] ${style.borderColor} shadow-xl relative overflow-hidden group hover:scale-[1.02] transition-transform duration-200 cursor-pointer`}>
-                      <div className={`absolute -left-[12px] md:-left-[16px] top-1/2 -translate-y-1/2 w-3 h-3 md:w-4 md:h-4 ${style.dotColor} rounded-full animate-pulse`} />
-                      <div className="flex flex-col gap-1 flex-1">
-                        <p className="text-[10px] md:text-xs font-black text-gray-500 uppercase tracking-widest mb-1">Promo Khusus</p>
-                        <h4 className="text-xl sm:text-2xl md:text-3xl font-black text-gray-900 mb-1">{promo.discount} {promo.title}</h4>
-                        <p className="text-xs text-gray-500 mb-2">{promo.description || '*Syarat dan ketentuan berlaku'}</p>
-                        <div className="flex items-center justify-between gap-3 mt-2">
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gray-100 rounded-full text-[10px]">
-                            <span className="text-gray-500">Kode:</span>
-                            <span className="font-bold text-black">{promo.code}</span>
-                          </span>
-                          <button 
-                            onClick={(e) => { e.preventDefault(); handlePromoClaim(promo); }}
-                            className={`px-3 py-1.5 text-xs font-bold rounded-lg text-white ${style.dotColor} hover:brightness-90 transition-all shadow-sm whitespace-nowrap`}
-                          >
-                            Klaim Voucher
-                          </button>
-                        </div>
-                      </div>
-                      <div className="text-4xl md:text-5xl opacity-20 group-hover:opacity-30 transition-opacity duration-200">
-                        {style.color === 'yellow' ? <FaTicketAlt className="text-yellow-500" /> : <FaShoppingBag className={`text-${style.color}-500`} />}
-                      </div>
-                    </div>
-                  </TiltCard>
-                </FadeInSection>
-              );
-            })}
-          </div>
-
-
-
-        </div>
-
-
-
-      </section>
 
       {/* ============ PRODUCTS SECTION ============ */}
       <section id="products" className="py-20 md:py-32 px-4 md:px-12 bg-gray-50 relative overflow-hidden border-t border-gray-200">
@@ -1691,6 +1533,166 @@ export default function LandingPage() {
             )}
           </div>
         </div>
+      </section>
+
+      {/* ============ PROMO SECTION ============ */}
+
+
+
+      <section id="vouchers" className="py-20 md:py-28 px-4 md:px-12 bg-zinc-800 relative overflow-hidden border-t border-zinc-700">
+
+
+
+        <div className="absolute inset-0 opacity-10">
+
+
+
+          <div className="absolute inset-0" style={{ backgroundImage: `radial-gradient(circle at 20% 50%, white 1px, transparent 1px), radial-gradient(circle at 80% 50%, white 1px, transparent 1px)`, backgroundSize: '40px 40px' }} />
+
+
+
+        </div>
+
+
+
+        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-12 lg:gap-16 relative z-10">
+
+
+
+          <div className="w-full lg:w-1/2 text-white text-center lg:text-left">
+
+
+
+            <FadeInSection delay={0} direction="left">
+
+
+
+              <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-white/10 backdrop-blur-xl rounded-full text-[10px] md:text-xs font-bold tracking-widest uppercase mb-4 md:mb-6 border border-white/20">
+
+
+
+                <FaGift className="text-yellow-400" /> Promo Eksklusif
+
+
+
+              </span>
+
+
+
+              <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tight mb-4 md:mb-6 leading-[1.15]">
+
+
+
+                Klaim Voucher <br className="hidden md:block"/>Spesial Anda!
+
+
+
+              </h2>
+
+
+
+              <p className="text-gray-300 text-base md:text-lg mb-8 max-w-lg mx-auto lg:mx-0 leading-relaxed">
+
+
+
+                Daftar sebagai member HairCut sekarang dan nikmati diskon kunjungan pertama serta potongan harga produk eksklusif.
+
+
+
+              </p>
+
+
+
+              <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
+
+
+
+                <Link to="/register" className="px-6 py-3.5 bg-white text-black font-bold rounded-full hover:bg-gray-200 transition-all duration-200 hover:-translate-y-1 shadow-xl text-sm flex items-center justify-center gap-2">
+
+
+
+                  <FaRocket className="text-gray-800" /> Daftar & Klaim <FaArrowRight className="text-xs" />
+
+
+
+                </Link>
+
+
+
+                <button className="px-6 py-3.5 border-2 border-white/30 text-white font-bold rounded-full hover:bg-white/10 transition-all duration-200 hover:-translate-y-1 text-sm flex items-center justify-center gap-2">
+
+
+
+                  <FaPercentage /> Lihat Semua Promo
+
+
+
+                </button>
+
+
+
+              </div>
+
+
+
+            </FadeInSection>
+
+
+
+          </div>
+
+
+
+          <div className="w-full lg:w-1/2 flex flex-col gap-4 md:gap-5">
+            {isLoadingDynamic ? (
+              <div className="col-span-full text-center py-10 font-bold text-white">Loading Promos...</div>
+            ) : dynamicPromos.map((promo, idx) => {
+              const colors = [
+                { color: "yellow", borderColor: "border-yellow-400", dotColor: "bg-yellow-400" },
+                { color: "emerald", borderColor: "border-emerald-400", dotColor: "bg-emerald-400" },
+                { color: "blue", borderColor: "border-blue-400", dotColor: "bg-blue-400" },
+                { color: "purple", borderColor: "border-purple-400", dotColor: "bg-purple-400" },
+              ];
+              const style = colors[idx % colors.length];
+              
+              return (
+                <FadeInSection delay={idx * 150} direction="right" key={idx} duration={500}>
+                  <TiltCard maxTilt={3}>
+                    <div className={`bg-white rounded-2xl md:rounded-3xl p-5 md:p-7 flex items-center justify-between border-l-[10px] md:border-l-[14px] ${style.borderColor} shadow-xl relative overflow-hidden group hover:scale-[1.02] transition-transform duration-200 cursor-pointer`}>
+                      <div className={`absolute -left-[12px] md:-left-[16px] top-1/2 -translate-y-1/2 w-3 h-3 md:w-4 md:h-4 ${style.dotColor} rounded-full animate-pulse`} />
+                      <div className="flex flex-col gap-1 flex-1">
+                        <p className="text-[10px] md:text-xs font-black text-gray-500 uppercase tracking-widest mb-1">Promo Khusus</p>
+                        <h4 className="text-xl sm:text-2xl md:text-3xl font-black text-gray-900 mb-1">{promo.discount} {promo.title}</h4>
+                        <p className="text-xs text-gray-500 mb-2">{promo.description || '*Syarat dan ketentuan berlaku'}</p>
+                        <div className="flex items-center justify-between gap-3 mt-2">
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gray-100 rounded-full text-[10px]">
+                            <span className="text-gray-500">Kode:</span>
+                            <span className="font-bold text-black">{promo.code}</span>
+                          </span>
+                          <button 
+                            onClick={(e) => { e.preventDefault(); handlePromoClaim(promo); }}
+                            className={`px-3 py-1.5 text-xs font-bold rounded-lg text-white ${style.dotColor} hover:brightness-90 transition-all shadow-sm whitespace-nowrap`}
+                          >
+                            Klaim Voucher
+                          </button>
+                        </div>
+                      </div>
+                      <div className="text-4xl md:text-5xl opacity-20 group-hover:opacity-30 transition-opacity duration-200">
+                        {style.color === 'yellow' ? <FaTicketAlt className="text-yellow-500" /> : <FaShoppingBag className={`text-${style.color}-500`} />}
+                      </div>
+                    </div>
+                  </TiltCard>
+                </FadeInSection>
+              );
+            })}
+          </div>
+
+
+
+        </div>
+
+
+
       </section>
 
       {/* ============ CONTACT SECTION (SPLIT LAYOUT) ============ */}

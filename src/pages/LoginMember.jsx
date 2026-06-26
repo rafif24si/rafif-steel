@@ -14,6 +14,13 @@ export default function LoginMember() {
 
   const [loginError, setLoginError] = useState('');
 
+  React.useEffect(() => {
+    const savedEmail = localStorage.getItem('userEmail');
+    if (savedEmail) {
+      navigate('/member-dashboard');
+    }
+  }, [navigate]);
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
     setLoginError('');

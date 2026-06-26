@@ -291,13 +291,22 @@ export default function Booking() {
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1 sm:hidden">Langkah {step}/4</p>
             </div>
           </div>
-          <div className="hidden sm:flex items-center gap-4 bg-slate-50 px-5 py-2.5 rounded-full border border-slate-100">
-            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Langkah {step} dari 4</span>
-            <div className="flex gap-2">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className={`h-2 rounded-full transition-all duration-500 ${step >= i ? 'w-8 bg-slate-900 shadow-sm' : 'w-2 bg-slate-200'}`}></div>
-              ))}
+          <div className="flex items-center gap-4">
+            <div className="hidden sm:flex items-center gap-4 bg-slate-50 px-5 py-2.5 rounded-full border border-slate-100">
+              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Langkah {step} dari 4</span>
+              <div className="flex gap-2">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className={`h-2 rounded-full transition-all duration-500 ${step >= i ? 'w-8 bg-slate-900 shadow-sm' : 'w-2 bg-slate-200'}`}></div>
+                ))}
+              </div>
             </div>
+            
+            <button 
+              onClick={() => navigate('/')} 
+              className="text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-blue-600 transition-colors flex items-center gap-2 bg-white border border-slate-200 hover:border-blue-200 hover:bg-blue-50 px-4 py-2.5 rounded-full shadow-sm hover:shadow-md"
+            >
+              <span>Beranda</span>
+            </button>
           </div>
         </div>
       </header>

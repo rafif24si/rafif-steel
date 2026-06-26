@@ -15,6 +15,13 @@ export default function RegisterMember() {
 
   const [registerError, setRegisterError] = useState('');
 
+  React.useEffect(() => {
+    const savedEmail = localStorage.getItem('userEmail');
+    if (savedEmail) {
+      navigate('/member-dashboard');
+    }
+  }, [navigate]);
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
     setRegisterError('');

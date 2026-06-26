@@ -28,7 +28,11 @@ export default function MemberDashboard() {
   const [profileImg, setProfileImg] = useState("https://i.pravatar.cc/150?img=11");
   const fileInputRef = useRef(null);
 
-  const handleLogout = () => navigate('/');
+  const handleLogout = () => {
+    localStorage.removeItem('userEmail');
+    localStorage.removeItem('userName');
+    navigate('/');
+  };
 
   const handleCopyVoucher = (code) => {
     setCopiedVoucher(code);
@@ -1027,7 +1031,11 @@ export default function MemberDashboard() {
           </Link>
           
           <div className="flex items-center gap-4">
-            <div className="hidden sm:flex items-center gap-3 border-r border-slate-200 pr-5 mr-1 cursor-pointer group" onClick={() => setCurrentView('profile')}>
+            <Link to="/" className="text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-blue-600 transition-colors flex items-center gap-2 bg-white border border-slate-200 hover:border-blue-200 hover:bg-blue-50 px-4 py-2.5 rounded-full shadow-sm hover:shadow-md">
+              <span>Beranda</span>
+            </Link>
+            
+            <div className="hidden sm:flex items-center gap-3 border-x border-slate-200 px-5 mx-1 cursor-pointer group" onClick={() => setCurrentView('profile')}>
               <div className="text-right">
                 <p className="text-xs font-black text-slate-800 group-hover:text-blue-600 transition-colors">Rafif Zidane</p>
                 <p className="text-[9px] font-bold text-amber-500 uppercase tracking-widest mt-0.5 flex items-center justify-end gap-1"><FaCrown/> Gold</p>
