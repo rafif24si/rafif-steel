@@ -21,6 +21,7 @@ const Login = React.lazy(() => import("./pages/Auth/Login"));
 const Register = React.lazy(() => import("./pages/Auth/Register"));
 const Forgot = React.lazy(() => import("./pages/Auth/Forget"));
 const Promo = React.lazy(() => import("./pages/Promo"));
+const Reviews = React.lazy(() => import("./pages/Reviews"));
 
 // IMPORT HALAMAN MEMBER BARU
 const LoginMember = React.lazy(() => import("./pages/LoginMember")); 
@@ -52,6 +53,7 @@ function App() {
           <Route path="/products/:id" element={<ProductDetail />} />
           <Route path="/kapster" element={<Kapster />} />
           <Route path="/promo" element={<Promo />} />
+          <Route path="/reviews" element={<Reviews />} />
           
           <Route path="/error/:code" element={<ErrorDisplay />} />
         </Route>

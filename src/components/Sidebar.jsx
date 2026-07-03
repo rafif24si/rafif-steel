@@ -1,9 +1,9 @@
 // src/components/Sidebar.jsx
 import React, { useState, useEffect } from "react";
-import { 
-  FaCut, FaCalendarCheck, FaUsers, FaThLarge, 
+import {
+  FaCut, FaCalendarCheck, FaUsers, FaThLarge,
   FaBoxOpen, FaUserTie, FaSignOutAlt, FaChevronLeft,
-  FaCog, FaQuestionCircle, FaChevronRight, FaTicketAlt // <
+  FaCog, FaQuestionCircle, FaChevronRight, FaTicketAlt, FaStar
 } from "react-icons/fa";
 import { NavLink, useLocation, useNavigate } from "react-router-dom"; // TAMBAHKAN useNavigate di sini
 
@@ -21,10 +21,9 @@ export default function Sidebar() {
   }, [location.pathname]);
 
   const menuClass = ({ isActive }) =>
-    `flex cursor-pointer items-center rounded-2xl px-4 py-3 text-[14px] font-medium transition-colors duration-200 relative ${
-      isActive
-        ? "text-[#0C0C0C] bg-gradient-to-r from-[#EDEEFC] to-[#F5F3FF] font-semibold shadow-sm"
-        : "text-gray-500 hover:text-[#0C0C0C] hover:bg-gray-50/80"
+    `flex cursor-pointer items-center rounded-2xl px-4 py-3 text-[14px] font-medium transition-colors duration-200 relative ${isActive
+      ? "text-[#0C0C0C] bg-gradient-to-r from-[#EDEEFC] to-[#F5F3FF] font-semibold shadow-sm"
+      : "text-gray-500 hover:text-[#0C0C0C] hover:bg-gray-50/80"
     }`;
 
   const menuItems = [
@@ -44,6 +43,7 @@ export default function Sidebar() {
         { to: "/promo", icon: FaTicketAlt, label: "Promo" },
         { to: "/kapster", icon: FaUserTie, label: "Kapster", highlight: true },
         { to: "/users", icon: FaUserTie, label: "Users", highlight: true },
+        { to: "/reviews", icon: FaStar, label: "Reviews" },
       ]
     }
   ];
@@ -52,7 +52,7 @@ export default function Sidebar() {
   const handleLogout = () => {
     // 1. Menghapus data sesi (user) yang tersimpan saat login
     localStorage.removeItem('user');
-    
+
     // 2. Mengarahkan pengguna secara paksa ke halaman Landing Page ("/")
     navigate('/');
   };
@@ -64,23 +64,23 @@ export default function Sidebar() {
   };
 
   const collapsed = isCollapsed && !isHovered;
-  
+
   return (
     <>
       {/* Spacer untuk mencegah layout shift */}
-      <div 
+      <div
         className="flex-shrink-0 transition-all duration-300 ease-in-out"
-        style={{ 
+        style={{
           width: collapsed ? '80px' : '280px',
           minWidth: collapsed ? '80px' : '280px',
         }}
       />
-      
+
       {/* Sidebar Fixed */}
       <div
         id="sidebar"
         className="fixed top-0 left-0 h-full flex flex-col bg-white border-r border-gray-100 font-sans z-40"
-        style={{ 
+        style={{
           fontFamily: "'Inter', system-ui, sans-serif",
           width: collapsed ? '80px' : '280px',
           transition: isAnimating ? 'width 300ms ease-in-out' : 'none',
@@ -110,7 +110,7 @@ export default function Sidebar() {
             <div className="w-11 h-11 bg-gradient-to-br from-[#101623] to-[#2A3A4F] rounded-2xl flex items-center justify-center shadow-lg shadow-slate-300/50 flex-shrink-0">
               <FaCut className="text-white text-lg" />
             </div>
-            
+
             {!collapsed && (
               <h1 className="text-[32px] font-black tracking-tight flex items-baseline whitespace-nowrap">
                 <span className="text-[#101623]">Hair</span>
@@ -118,7 +118,7 @@ export default function Sidebar() {
               </h1>
             )}
           </div>
-          
+
           {!collapsed && (
             <div className="ml-1">
               <p className="text-[#8E9AAC] text-[13px] font-medium whitespace-nowrap">
@@ -138,29 +138,28 @@ export default function Sidebar() {
             <div key={groupIdx} className="mb-6">
               {/* Group Label */}
               {!collapsed && (
-                <div 
+                <div
                   className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-3 px-4 cursor-pointer flex items-center justify-between hover:text-gray-600 transition-colors"
                   onClick={() => setActiveGroup(activeGroup === groupIdx ? null : groupIdx)}
                 >
                   <span>{group.group}</span>
-                  <FaChevronRight 
-                    className={`text-[8px] transition-transform duration-200 ${
-                      activeGroup === groupIdx ? 'rotate-90' : ''
-                    }`}
+                  <FaChevronRight
+                    className={`text-[8px] transition-transform duration-200 ${activeGroup === groupIdx ? 'rotate-90' : ''
+                      }`}
                   />
                 </div>
               )}
-              
+
               {/* Menu Items */}
               <ul className="space-y-1">
                 {group.items.map((item, idx) => {
                   const isActive = location.pathname === item.to;
                   const Icon = item.icon;
-                  
+
                   return (
                     <li key={idx}>
-                      <NavLink 
-                        to={item.to} 
+                      <NavLink
+                        to={item.to}
                         className={menuClass}
                         title={collapsed ? item.label : ''}
                         onClick={() => setIsAnimating(false)}
@@ -169,35 +168,31 @@ export default function Sidebar() {
                         {isActive && (
                           <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-[#101623] rounded-r-full"></div>
                         )}
-                        
+
                         {/* Icon */}
-                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 flex-shrink-0 ${
-                          collapsed ? 'mr-0' : 'mr-3'
-                        } ${
-                          isActive 
-                            ? 'bg-white shadow-md shadow-slate-200/50' 
+                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 flex-shrink-0 ${collapsed ? 'mr-0' : 'mr-3'
+                          } ${isActive
+                            ? 'bg-white shadow-md shadow-slate-200/50'
                             : 'bg-transparent group-hover:bg-white group-hover:shadow-sm'
-                        } ${item.highlight ? 'bg-emerald-50 group-hover:bg-emerald-100' : ''}`}>
-                          <Icon className={`text-lg transition-colors duration-200 ${
-                            isActive 
-                              ? 'text-[#101623]' 
-                              : item.highlight 
-                                ? 'text-emerald-600' 
+                          } ${item.highlight ? 'bg-emerald-50 group-hover:bg-emerald-100' : ''}`}>
+                          <Icon className={`text-lg transition-colors duration-200 ${isActive
+                              ? 'text-[#101623]'
+                              : item.highlight
+                                ? 'text-emerald-600'
                                 : 'text-gray-400 group-hover:text-gray-600'
-                          }`} />
+                            }`} />
                         </div>
-                        
+
                         {/* Label & Badge */}
                         {!collapsed && (
                           <>
                             <span className="flex-1 whitespace-nowrap">{item.label}</span>
-                            
+
                             {item.badge && (
-                              <span className={`ml-auto px-2.5 py-1 rounded-full text-[10px] font-bold whitespace-nowrap ${
-                                isActive 
-                                  ? 'bg-[#101623] text-white' 
+                              <span className={`ml-auto px-2.5 py-1 rounded-full text-[10px] font-bold whitespace-nowrap ${isActive
+                                  ? 'bg-[#101623] text-white'
                                   : 'bg-gray-100 text-gray-600 group-hover:bg-gray-200'
-                              }`}>
+                                }`}>
                                 {item.badge}
                               </span>
                             )}
@@ -245,7 +240,7 @@ export default function Sidebar() {
             <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md shadow-violet-200">
               <span className="text-white text-sm font-bold">A</span>
             </div>
-            
+
             {/* User Info */}
             {!collapsed && (
               <div className="flex-1 min-w-0">
@@ -253,13 +248,12 @@ export default function Sidebar() {
                 <p className="text-xs text-gray-400 truncate">admin@haircut.id</p>
               </div>
             )}
-            
+
             {/* Logout Button */}
             <button
               onClick={handleLogout}
-              className={`rounded-xl flex items-center justify-center bg-white border border-gray-200 text-red-400 hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-all duration-200 shadow-sm ${
-                collapsed ? 'w-10 h-10' : 'w-9 h-9'
-              }`}
+              className={`rounded-xl flex items-center justify-center bg-white border border-gray-200 text-red-400 hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-all duration-200 shadow-sm ${collapsed ? 'w-10 h-10' : 'w-9 h-9'
+                }`}
               title="Logout"
             >
               <FaSignOutAlt className="text-sm" />
