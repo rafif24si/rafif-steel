@@ -7,18 +7,18 @@ export default function AuthLayout() {
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-[#F7F9FB] font-sans p-4 md:p-8">
-            
+
             {/* Main Card Container */}
             <div className="flex flex-col md:flex-row w-full max-w-[1050px] bg-white rounded-[2.5rem] shadow-xl overflow-hidden min-h-[600px]">
-                
+
                 {/* ================= LEFT PANEL (Text Only & Centered) ================= */}
                 {/* Menambahkan items-center dan justify-center agar konten berada tepat di tengah */}
                 <div className="hidden md:flex flex-col items-center justify-center text-center relative w-1/2 p-12 lg:p-16 bg-gradient-to-br from-[#EDEEFC] via-white to-[#E6F1FD] overflow-hidden">
-                    
+
                     {/* Efek Cahaya / Blur Background */}
                     <div className="absolute top-[-10%] left-[-10%] w-72 h-72 bg-[#D0BDF0]/50 rounded-full mix-blend-multiply filter blur-3xl"></div>
                     <div className="absolute bottom-[-10%] right-[-10%] w-72 h-72 bg-[#7DBBFF]/40 rounded-full mix-blend-multiply filter blur-3xl"></div>
-                    
+
                     {/* Header Logo & Tulisan */}
                     <div className="relative z-10 flex flex-col items-center">
                         <h1 className="text-4xl font-black tracking-tighter text-[#101623] mb-6">
@@ -38,7 +38,7 @@ export default function AuthLayout() {
 
                 {/* ================= RIGHT PANEL (Form Outlet) ================= */}
                 <div className="w-full md:w-1/2 flex flex-col justify-center p-8 sm:p-12 lg:p-16 bg-white relative z-10">
-                    
+
                     {/* Header Logo untuk Mobile Saja */}
                     <div className="md:hidden flex flex-col items-center justify-center mb-8">
                         <h1 className="text-4xl font-black tracking-tighter text-[#101623]">
@@ -56,7 +56,7 @@ export default function AuthLayout() {
 
                     {/* Footer Section */}
                     <p className="text-center text-[11px] font-medium text-gray-400 mt-12">
-                        © 2026 Rafif HairCut Barbershop.<br/>All rights reserved.
+                        © 2026 Rafif HairCut Barbershop.<br />All rights reserved.
                     </p>
                 </div>
 

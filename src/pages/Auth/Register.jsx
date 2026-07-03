@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaEnvelope, FaLock, FaEye, FaEyeSlash, FaUser } from 'react-icons/fa';
-import { usersAPI } from '../../services/usersAPI'; 
+import { usersAPI } from '../../services/usersAPI';
 
 export default function Register() {
     const [showPassword, setShowPassword] = useState(false);
@@ -24,7 +24,7 @@ export default function Register() {
     // Fungsi yang BENAR untuk mengirim ke Supabase
     const handleRegister = async (e) => {
         e.preventDefault();
-        
+
         if (formData.password !== formData.confirmPassword) {
             alert("Password dan Confirm Password tidak cocok!");
             return;
@@ -34,14 +34,14 @@ export default function Register() {
             setLoading(true);
             const payload = {
                 name: formData.name,
-                email: formData.email, 
+                email: formData.email,
                 password: formData.password,
                 role: "customer"
             };
-            
+
             // Perintah ini yang akan memasukkan data ke database Anda
             await usersAPI.registerUser(payload);
-            
+
             alert("Pendaftaran berhasil! Silakan sign in.");
             navigate('/login');
         } catch (error) {
@@ -65,12 +65,12 @@ export default function Register() {
                     </label>
                     <div className="relative">
                         <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400"><FaUser /></span>
-                        <input 
-                            type="text" 
-                            name="name" 
-                            value={formData.name} 
-                            onChange={handleChange} 
-                            placeholder="M Rafif Zidane" 
+                        <input
+                            type="text"
+                            name="name"
+                            value={formData.name}
+                            onChange={handleChange}
+                            placeholder="M Rafif Zidane"
                             className="w-full bg-slate-50 border-none rounded-2xl pl-11 pr-4 py-3.5 text-sm font-medium outline-none focus:ring-2 focus:ring-slate-800 transition-all"
                             required
                         />
@@ -83,12 +83,12 @@ export default function Register() {
                     </label>
                     <div className="relative">
                         <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400"><FaEnvelope /></span>
-                        <input 
-                            type="email" 
-                            name="email" 
-                            value={formData.email} 
-                            onChange={handleChange} 
-                            placeholder="admin@haircut.com" 
+                        <input
+                            type="email"
+                            name="email"
+                            value={formData.email}
+                            onChange={handleChange}
+                            placeholder="admin@haircut.com"
                             className="w-full bg-slate-50 border-none rounded-2xl pl-11 pr-4 py-3.5 text-sm font-medium outline-none focus:ring-2 focus:ring-slate-800 transition-all"
                             required
                         />
@@ -101,12 +101,12 @@ export default function Register() {
                     </label>
                     <div className="relative">
                         <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400"><FaLock /></span>
-                        <input 
-                            type={showPassword ? "text" : "password"} 
-                            name="password" 
-                            value={formData.password} 
-                            onChange={handleChange} 
-                            placeholder="••••••••" 
+                        <input
+                            type={showPassword ? "text" : "password"}
+                            name="password"
+                            value={formData.password}
+                            onChange={handleChange}
+                            placeholder="••••••••"
                             className="w-full bg-slate-50 border-none rounded-2xl pl-11 pr-12 py-3.5 text-sm font-medium outline-none focus:ring-2 focus:ring-slate-800 transition-all"
                             required
                         />
@@ -122,12 +122,12 @@ export default function Register() {
                     </label>
                     <div className="relative">
                         <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-slate-400"><FaLock /></span>
-                        <input 
-                            type={showConfirmPassword ? "text" : "password"} 
-                            name="confirmPassword" 
-                            value={formData.confirmPassword} 
-                            onChange={handleChange} 
-                            placeholder="••••••••" 
+                        <input
+                            type={showConfirmPassword ? "text" : "password"}
+                            name="confirmPassword"
+                            value={formData.confirmPassword}
+                            onChange={handleChange}
+                            placeholder="••••••••"
                             className="w-full bg-slate-50 border-none rounded-2xl pl-11 pr-12 py-3.5 text-sm font-medium outline-none focus:ring-2 focus:ring-slate-800 transition-all"
                             required
                         />
