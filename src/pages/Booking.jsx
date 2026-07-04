@@ -30,6 +30,7 @@ export default function Booking() {
   const [appliedPromo, setAppliedPromo] = useState(null);
   const [isPromoLoading, setIsPromoLoading] = useState(false);
   const [promoError, setPromoError] = useState('');
+  const [bookedTimes, setBookedTimes] = useState([]);
 
   // Auto apply promo if passed from LandingPage
   useEffect(() => {
@@ -51,6 +52,17 @@ export default function Booking() {
       setStep(2); // Skip straight to Kapster selection
     }
   }, [location.state?.preSelectedService, step]);
+
+  // Handle pre-selected kapster from LandingPage
+  useEffect(() => {
+    if (location.state?.preSelectedKapster && !bookingData.kapster) {
+      const preSelected = location.state.preSelectedKapster;
+      setBookingData(prev => ({
+        ...prev,
+        kapster: preSelected.name
+      }));
+    }
+  }, [location.state?.preSelectedKapster]);
 
   // PROTEKSI ROUTE & FETCH DATA
   useEffect(() => {
@@ -89,6 +101,29 @@ export default function Booking() {
 
     fetchData();
   }, [navigate]);
+
+  // Fetch booked times for selected kapster and date
+  useEffect(() => {
+    const fetchBookedTimes = async () => {
+      if (step === 3 && bookingData.date && bookingData.kapster) {
+        try {
+          const { data, error } = await supabase
+            .from('haircut_bookings')
+            .select('waktu, status')
+            .eq('tanggal', bookingData.date)
+            .eq('kapster', bookingData.kapster);
+            
+          if (!error && data) {
+            const activeBookings = data.filter(b => b.status && !b.status.toLowerCase().includes('batal') && !b.status.toLowerCase().includes('cancel'));
+            setBookedTimes(activeBookings.map(b => b.waktu));
+          }
+        } catch (err) {
+          console.error("Error fetching booked times", err);
+        }
+      }
+    };
+    fetchBookedTimes();
+  }, [bookingData.date, bookingData.kapster, step]);
 
   const serviceStyles = [
     { icon: FaCut, bg: 'bg-blue-50', text: 'text-blue-500', hoverBg: 'group-hover:bg-blue-500', hoverText: 'group-hover:text-blue-700', borderHover: 'hover:border-blue-200', lightHover: 'group-hover:bg-blue-50/50', shadow: 'hover:shadow-blue-500/20' },
@@ -139,22 +174,94 @@ export default function Booking() {
   };
 
   const handleBack = () => {
-    if (step > 1) prevStep();
-    else navigate('/member-dashboard'); 
+    if (step === 3 && location.state?.preSelectedKapster) {
+      setStep(1); // Go back to service selection if kapster is pre-selected
+    } else if (step > 1) {
+      prevStep();
+    } else {
+      navigate('/member-dashboard'); 
+    }
   };
+
+  const [dateError, setDateError] = useState('');
 
   const handleServiceSelect = (service) => {
     setBookingData({ ...bookingData, service: service.name, price: service.price });
-    nextStep();
+    
+    // Jika kapster sudah terisi dari awal (via LandingPage), langsung lompat ke step 3
+    if (bookingData.kapster || location.state?.preSelectedKapster) {
+      setStep(3);
+    } else {
+      nextStep();
+    }
   };
 
   const handleKapsterSelect = (kapster) => {
     setBookingData({ ...bookingData, kapster: kapster.name });
+    setDateError(''); // Reset date error if changing kapster
     nextStep();
   };
 
+  const parseAvailableDays = (shiftDaysStr) => {
+    if (!shiftDaysStr) return [0,1,2,3,4,5,6];
+    
+    const daysMap = { 'senin': 1, 'selasa': 2, 'rabu': 3, 'kamis': 4, 'jumat': 5, 'sabtu': 6, 'minggu': 0 };
+    let str = shiftDaysStr.toLowerCase().trim();
+    if (str === 'setiap hari' || str === 'all days' || str === 'tiap hari') return [0,1,2,3,4,5,6];
+    
+    if (str.includes('-')) {
+        let parts = str.split('-');
+        if (parts.length === 2) {
+            let start = parts[0].trim();
+            let end = parts[1].trim();
+            if (daysMap[start] !== undefined && daysMap[end] !== undefined) {
+                let startIdx = daysMap[start];
+                let endIdx = daysMap[end];
+                let available = [];
+                let current = startIdx;
+                available.push(current);
+                while (current !== endIdx) {
+                    current = (current + 1) % 7;
+                    available.push(current);
+                }
+                return available;
+            }
+        }
+    }
+    
+    if (str.includes(',')) {
+        let parts = str.split(',').map(s => s.trim());
+        let available = [];
+        parts.forEach(p => { if (daysMap[p] !== undefined) available.push(daysMap[p]); });
+        if (available.length > 0) return available;
+    }
+    
+    if (daysMap[str] !== undefined) return [daysMap[str]];
+    return [0,1,2,3,4,5,6];
+  };
+
   const handleDateChange = (e) => {
-    setBookingData({ ...bookingData, date: e.target.value, time: null });
+    setDateError('');
+    const selectedDateStr = e.target.value;
+    if (!selectedDateStr) {
+      setBookingData({ ...bookingData, date: '', time: null });
+      return;
+    }
+
+    const selectedKapsterObj = kapsters.find(k => k.name === bookingData.kapster);
+    if (selectedKapsterObj && selectedKapsterObj.shift_days) {
+      const allowedDays = parseAvailableDays(selectedKapsterObj.shift_days);
+      const selectedDate = new Date(selectedDateStr);
+      const selectedDayOfWeek = selectedDate.getDay(); 
+
+      if (!allowedDays.includes(selectedDayOfWeek)) {
+        setDateError(`Maaf, ${bookingData.kapster} tidak bertugas pada hari tersebut. Jadwal shift: ${selectedKapsterObj.shift_days}`);
+        setBookingData({ ...bookingData, date: '', time: null });
+        return;
+      }
+    }
+    
+    setBookingData({ ...bookingData, date: selectedDateStr, time: null });
   };
 
   const handleApplyPromo = async (codeToApply = promoCodeInput) => {
@@ -442,7 +549,25 @@ export default function Booking() {
                         onChange={handleDateChange}
                         className="w-full bg-slate-50 border-2 border-slate-100 text-slate-900 rounded-2xl pl-16 pr-6 py-5 focus:outline-none focus:border-blue-500 focus:bg-white transition-all font-black text-lg cursor-pointer hover:border-slate-300 shadow-sm"
                       />
+                      {(() => {
+                        const selectedKapsterObj = kapsters.find(k => k.name === bookingData.kapster);
+                        return (
+                          <p className="text-[10px] font-bold text-slate-400 mt-2 uppercase tracking-widest pl-2">
+                            Jadwal Shift: {selectedKapsterObj?.shift_days || 'Setiap Hari'}
+                          </p>
+                        );
+                      })()}
                     </div>
+                    
+                    {dateError && (
+                      <div className="mt-4 ml-0 md:ml-14 p-4 bg-red-50 rounded-2xl border border-red-100 animate-in fade-in zoom-in duration-300 flex items-start gap-3">
+                        <div className="text-red-500 mt-0.5 font-bold">!</div>
+                        <div>
+                          <p className="text-[10px] font-bold text-red-600 uppercase tracking-widest">Jadwal Tidak Tersedia</p>
+                          <p className="text-sm font-bold text-red-800 mt-0.5">{dateError}</p>
+                        </div>
+                      </div>
+                    )}
                     
                     {bookingData.date && (
                       <div className="mt-4 ml-0 md:ml-14 p-4 bg-emerald-50 rounded-2xl border border-emerald-100 animate-in fade-in zoom-in duration-300 flex items-start gap-3">
@@ -467,19 +592,40 @@ export default function Booking() {
                       </div>
                       
                       <div className="grid grid-cols-3 sm:grid-cols-4 gap-4 ml-0 md:ml-14 mb-8">
-                        {availableTimes.map((time, idx) => (
-                          <button 
-                            key={idx}
-                            onClick={() => setBookingData({ ...bookingData, time: time })}
-                            className={`py-4 rounded-2xl border-2 font-black text-base transition-all duration-300 ${
-                              bookingData.time === time 
-                                ? 'border-slate-900 bg-slate-900 text-white shadow-[0_10px_20px_rgba(0,0,0,0.15)] transform -translate-y-1 scale-105' 
-                                : 'border-slate-100 bg-white text-slate-500 hover:border-slate-300 hover:text-slate-900 hover:-translate-y-0.5 hover:shadow-sm'
-                            }`}
-                          >
-                            {time}
-                          </button>
-                        ))}
+                        {availableTimes.map((time, idx) => {
+                          const isBooked = bookedTimes.includes(time);
+                          let isPastTime = false;
+                          
+                          if (bookingData.date === getTodayDate()) {
+                            const now = new Date();
+                            const currentHour = now.getHours();
+                            const currentMinute = now.getMinutes();
+                            
+                            const [timeHour, timeMinute] = time.split(':').map(Number);
+                            
+                            if (timeHour < currentHour || (timeHour === currentHour && timeMinute < currentMinute)) {
+                              isPastTime = true;
+                            }
+                          }
+                          
+                          const isDisabled = isBooked || isPastTime;
+                          
+                          return (
+                            <button 
+                              key={idx}
+                              disabled={isDisabled}
+                              onClick={() => setBookingData({ ...bookingData, time: time })}
+                              className={`py-4 rounded-2xl border-2 font-black text-base transition-all duration-300 ${
+                                isDisabled ? 'border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed line-through' :
+                                bookingData.time === time 
+                                  ? 'border-slate-900 bg-slate-900 text-white shadow-[0_10px_20px_rgba(0,0,0,0.15)] transform -translate-y-1 scale-105' 
+                                  : 'border-slate-100 bg-white text-slate-500 hover:border-slate-300 hover:text-slate-900 hover:-translate-y-0.5 hover:shadow-sm'
+                              }`}
+                            >
+                              {time}
+                            </button>
+                          );
+                        })}
                       </div>
 
                       <div className="flex items-center gap-4 mb-6">

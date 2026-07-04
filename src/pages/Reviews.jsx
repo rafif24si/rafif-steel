@@ -50,7 +50,7 @@ export default function Reviews() {
 
   const filteredReviews = reviews.filter(r => 
     (r.name && r.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (r.comment && r.comment.toLowerCase().includes(searchTerm.toLowerCase()))
+    (r.review && r.review.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   return (
@@ -108,7 +108,7 @@ export default function Reviews() {
                       <FaStar key={i} className={i < review.rating ? "text-yellow-400" : "text-gray-200"} />
                     ))}
                   </div>
-                  <p className="text-sm text-slate-600 italic">"{review.comment}"</p>
+                  <p className="text-sm text-slate-600 italic">"{review.review}"</p>
                 </div>
               ))}
             </div>

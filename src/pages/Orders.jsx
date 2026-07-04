@@ -56,7 +56,8 @@ export default function Orders() {
           service: `[Booking] ${b.layanan || b.service}`,
           status: b.status || 'Pending',
           totalPrice: b.harga || 75000,
-          orderDate: b.tanggal ? b.tanggal : b.created_at.substring(0, 10),
+          orderDate: b.tanggal ? b.tanggal : (b.created_at ? b.created_at.substring(0, 10) : ''),
+          createdAt: b.created_at || new Date().toISOString(),
           type: 'booking',
           raw: b
         }))];
@@ -69,13 +70,14 @@ export default function Orders() {
           service: `[Produk] ${p.items}`,
           status: p.status || 'Pending',
           totalPrice: p.total_harga || 0,
-          orderDate: p.created_at.substring(0, 10),
+          orderDate: p.created_at ? p.created_at.substring(0, 10) : '',
+          createdAt: p.created_at || new Date().toISOString(),
           type: 'product',
           raw: p
         }))];
       }
 
-      combined.sort((a, b) => new Date(b.orderDate) - new Date(a.orderDate));
+      combined.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       setOrders(combined);
     } catch (error) {
       console.error("Error fetching orders:", error);
@@ -424,6 +426,14 @@ export default function Orders() {
                 <div>
                   <span className="block text-slate-500 font-semibold mb-1">Tipe Order</span>
                   <span className="capitalize text-slate-800 font-bold">{selectedOrder.type === 'booking' ? (selectedOrder.raw.booking_type || 'Online Booking') : 'Product Order'}</span>
+                </div>
+                <div className="col-span-2 mt-2">
+                  <span className="block text-slate-500 font-semibold mb-1">Tanggal Pemesanan</span>
+                  <span className="text-slate-800 font-bold">
+                    {new Date(selectedOrder.createdAt).toLocaleString('id-ID', {
+                      day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'
+                    })}
+                  </span>
                 </div>
                 <div className="col-span-2 border-t border-gray-100 pt-4">
                   <span className="block text-slate-500 font-semibold mb-1">Pelanggan</span>

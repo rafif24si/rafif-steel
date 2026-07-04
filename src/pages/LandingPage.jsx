@@ -328,6 +328,73 @@ const ProductCard = ({ product, index, onBuy }) => {
 };
 
 // ============ MAIN LANDING PAGE ============
+const checkKapsterAvailability = (kapster) => {
+    if (!kapster) return false;
+    
+    const daysMap = { 'senin': 1, 'selasa': 2, 'rabu': 3, 'kamis': 4, 'jumat': 5, 'sabtu': 6, 'minggu': 0 };
+    let shiftDaysStr = kapster.shift_days ? kapster.shift_days.toLowerCase().trim() : '';
+    let allowedDays = [0,1,2,3,4,5,6];
+    
+    if (shiftDaysStr && shiftDaysStr !== 'setiap hari' && shiftDaysStr !== 'all days' && shiftDaysStr !== 'tiap hari') {
+        if (shiftDaysStr.includes('-')) {
+            let parts = shiftDaysStr.split('-');
+            if (parts.length === 2) {
+                let start = parts[0].trim();
+                let end = parts[1].trim();
+                if (daysMap[start] !== undefined && daysMap[end] !== undefined) {
+                    let startIdx = daysMap[start];
+                    let endIdx = daysMap[end];
+                    allowedDays = [];
+                    let current = startIdx;
+                    allowedDays.push(current);
+                    while (current !== endIdx) {
+                        current = (current + 1) % 7;
+                        allowedDays.push(current);
+                    }
+                }
+            }
+        } else if (shiftDaysStr.includes(',')) {
+            let parts = shiftDaysStr.split(',').map(s => s.trim());
+            allowedDays = [];
+            parts.forEach(p => { if (daysMap[p] !== undefined) allowedDays.push(daysMap[p]); });
+        } else if (daysMap[shiftDaysStr] !== undefined) {
+            allowedDays = [daysMap[shiftDaysStr]];
+        }
+    }
+    
+    const now = new Date();
+    const currentDay = now.getDay();
+    if (!allowedDays.includes(currentDay)) return false;
+    
+    if (kapster.shift_hours) {
+        try {
+            const timeParts = kapster.shift_hours.split('-');
+            if (timeParts.length === 2) {
+                const startTimeStr = timeParts[0].trim().replace(/wib/i, '').trim();
+                const endTimeStr = timeParts[1].trim().replace(/wib/i, '').trim();
+                
+                const [startHour, startMinute] = startTimeStr.split(':').map(Number);
+                const [endHour, endMinute] = endTimeStr.split(':').map(Number);
+                
+                const currentHour = now.getHours();
+                const currentMinute = now.getMinutes();
+                
+                const currentTotalMinutes = currentHour * 60 + currentMinute;
+                const startTotalMinutes = startHour * 60 + (startMinute || 0);
+                const endTotalMinutes = endHour * 60 + (endMinute || 0);
+                
+                if (currentTotalMinutes < startTotalMinutes || currentTotalMinutes > endTotalMinutes) {
+                    return false;
+                }
+            }
+        } catch (e) {
+            // Error parsing time, just proceed
+        }
+    }
+    
+    return true;
+};
+
 export default function LandingPage() {
   const navigate = useNavigate();
   const [isScrolled, setIsScrolled] = useState(false);
@@ -1325,14 +1392,23 @@ export default function LandingPage() {
               <span className="font-bold text-right text-sm">{selectedKapster?.shift_days || 'Senin-Minggu'}<br/><span className="text-xs text-gray-500">{selectedKapster?.shift_hours || '10:00-20:00'}</span></span>
             </div>
             <div className="flex justify-between items-center bg-gray-800/50 p-3 rounded-xl border border-gray-700">
-              <span className="text-gray-400 text-sm">Tarif Mulai</span>
-              <span className="font-black text-lg text-emerald-400">Rp {selectedKapster?.base_price?.toLocaleString('id-ID') || '50.000'}</span>
+              <span className="text-gray-400 text-sm">Status Saat Ini</span>
+              {checkKapsterAvailability(selectedKapster) ? (
+                <span className="font-black text-lg text-emerald-400 flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 bg-emerald-400 rounded-full animate-pulse"></span> Tersedia
+                </span>
+              ) : (
+                <span className="font-black text-lg text-red-400 flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 bg-red-400 rounded-full"></span> Tidak Tersedia
+                </span>
+              )}
             </div>
           </div>
           
           <div className="mt-6 flex gap-3">
             <Link 
               to="/booking" 
+              state={{ preSelectedKapster: selectedKapster }}
               onClick={(e) => {
                 if (!userSession) {
                   e.preventDefault();
