@@ -137,7 +137,7 @@ export default function Booking() {
     { icon: FaSpa, bg: 'bg-fuchsia-50', text: 'text-fuchsia-500', hoverBg: 'group-hover:bg-fuchsia-500', hoverText: 'group-hover:text-fuchsia-700', borderHover: 'hover:border-fuchsia-200', lightHover: 'group-hover:bg-fuchsia-50/50', shadow: 'hover:shadow-fuchsia-500/20' }
   ];
 
-  const availableTimes = ['09:00', '10:00', '11:00', '13:00', '14:30', '16:00', '17:30', '19:00', '20:00'];
+  const availableTimes = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00'];
 
   const getTodayDate = () => new Date().toISOString().split('T')[0];
 
@@ -607,8 +607,26 @@ export default function Booking() {
                               isPastTime = true;
                             }
                           }
+
+                          let isOutsideShift = false;
+                          const selectedKapsterObj = kapsters.find(k => k.name === bookingData.kapster);
+                          if (selectedKapsterObj && selectedKapsterObj.shift_hours) {
+                              const shiftParts = selectedKapsterObj.shift_hours.split('-');
+                              if (shiftParts.length === 2) {
+                                  const startShift = shiftParts[0].trim().replace(/wib/i, '').trim();
+                                  const endShift = shiftParts[1].trim().replace(/wib/i, '').trim();
+                                  const [shiftStartHour] = startShift.split(':').map(Number);
+                                  const [shiftEndHour] = endShift.split(':').map(Number);
+                                  const [timeHour] = time.split(':').map(Number);
+                                  
+                                  if (timeHour < shiftStartHour || timeHour > shiftEndHour) {
+                                      isOutsideShift = true;
+                                  }
+                              }
+                          }
                           
-                          const isDisabled = isBooked || isPastTime;
+                          const isDisabled = isBooked || isPastTime || isOutsideShift;
+
                           
                           return (
                             <button 

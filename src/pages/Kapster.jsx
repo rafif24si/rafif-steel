@@ -16,9 +16,15 @@ export default function Kapster() {
     const [imageFile, setImageFile] = useState(null);
     const [isUploading, setIsUploading] = useState(false);
     const [formData, setFormData] = useState({
-        name: "", specialty: "Senior Barber", experience: "", description: "", 
-        shift_days: "", shift_hours: "", services: "", base_price: "", img_url: ""
+        name: "", specialty: "Senior Barber", experience: "", description: "",
+        services: "", base_price: "", img_url: ""
     });
+
+    const [isEveryday, setIsEveryday] = useState(false);
+    const [startDay, setStartDay] = useState('Senin');
+    const [endDay, setEndDay] = useState('Minggu');
+    const [startTime, setStartTime] = useState('10:00');
+    const [endTime, setEndTime] = useState('20:00');
 
     useEffect(() => {
         fetchKapsters();
@@ -42,8 +48,8 @@ export default function Kapster() {
                 const fileName = `kapsters/${Math.random()}.${fileExt}`;
 
                 let { error: uploadError } = await supabase.storage
-                  .from('products')
-                  .upload(fileName, imageFile);
+                    .from('products')
+                    .upload(fileName, imageFile);
 
                 if (uploadError) throw uploadError;
 
@@ -56,8 +62,8 @@ export default function Kapster() {
                 specialty: formData.specialty,
                 experience: formData.experience,
                 description: formData.description,
-                shift_days: formData.shift_days,
-                shift_hours: formData.shift_hours,
+                shift_days: isEveryday ? 'Setiap Hari' : `${startDay} - ${endDay}`,
+                shift_hours: `${startTime} - ${endTime} WIB`,
                 services: formData.services,
                 base_price: parseInt(formData.base_price) || 0,
                 img_url: uploadedUrl || 'https://github.com/shadcn.png'
@@ -89,12 +95,34 @@ export default function Kapster() {
             specialty: k.specialty,
             experience: k.experience || '',
             description: k.description || '',
-            shift_days: k.shift_days || '',
-            shift_hours: k.shift_hours || '',
             services: k.services || '',
             base_price: k.base_price ? k.base_price.toString() : '',
             img_url: k.img_url || ''
         });
+
+        let ed = false, sd = 'Senin', nd = 'Minggu';
+        if (k.shift_days) {
+            if (k.shift_days.toLowerCase() === 'setiap hari') {
+                ed = true;
+            } else if (k.shift_days.includes('-')) {
+                const parts = k.shift_days.split('-');
+                sd = parts[0].trim();
+                nd = parts[1].trim();
+            }
+        }
+        setIsEveryday(ed);
+        setStartDay(sd);
+        setEndDay(nd);
+
+        let st = '10:00', et = '20:00';
+        if (k.shift_hours?.includes('-')) {
+            const parts = k.shift_hours.split('-');
+            st = parts[0].trim().replace(/wib/i, '').trim();
+            et = parts[1].trim().replace(/wib/i, '').trim();
+        }
+        setStartTime(st);
+        setEndTime(et);
+
         setIsModalOpen(true);
     };
 
@@ -109,17 +137,22 @@ export default function Kapster() {
         setIsEditMode(false);
         setImageFile(null);
         setFormData({
-            name: "", specialty: "Senior Barber", experience: "", description: "", 
-            shift_days: "", shift_hours: "", services: "", base_price: "", img_url: ""
+            name: "", specialty: "Senior Barber", experience: "", description: "",
+            services: "", base_price: "", img_url: ""
         });
+        setIsEveryday(false);
+        setStartDay('Senin');
+        setEndDay('Minggu');
+        setStartTime('10:00');
+        setEndTime('20:00');
         setIsModalOpen(true);
     };
 
     return (
         <div className="flex-1 w-full pb-12 bg-[#F8FAFC] min-h-screen p-4 md:p-8 font-sans selection:bg-slate-800 selection:text-white">
             <PageHeader title="Manajemen Kapster" breadcrumb={["Dashboard", "Kapster"]}>
-                <button 
-                    onClick={openAddModal} 
+                <button
+                    onClick={openAddModal}
                     className="shadow-lg shadow-slate-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 bg-slate-900 hover:bg-slate-800 text-white px-6 py-2.5 rounded-xl border-none flex items-center gap-2 font-bold text-sm"
                 >
                     <FaPlus /> Tambah Kapster
@@ -131,14 +164,14 @@ export default function Kapster() {
                     {/* Pembungkus TabsList yang lebih modern */}
                     <div className="flex justify-center md:justify-start mb-8">
                         <TabsList className="bg-slate-100/80 p-1.5 rounded-2xl">
-                            <TabsTrigger 
-                                value="jadwal" 
+                            <TabsTrigger
+                                value="jadwal"
                                 className="rounded-xl data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm px-8 py-3 transition-all duration-300 text-sm font-bold text-slate-500 hover:text-slate-700"
                             >
                                 Jadwal & Layanan
                             </TabsTrigger>
-                            <TabsTrigger 
-                                value="profil" 
+                            <TabsTrigger
+                                value="profil"
                                 className="rounded-xl data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-sm px-8 py-3 transition-all duration-300 text-sm font-bold text-slate-500 hover:text-slate-700"
                             >
                                 Profil Kapster
@@ -209,11 +242,11 @@ export default function Kapster() {
                                 kapsters.map(k => (
                                     <div key={k.id} className="group relative overflow-hidden bg-white border-2 border-slate-100 rounded-[2.5rem] p-8 hover:border-slate-800 hover:shadow-2xl transition-all duration-500 flex flex-col justify-between">
                                         <div className="absolute top-0 right-0 w-32 h-32 bg-slate-50 rounded-bl-full -z-10 group-hover:bg-slate-900 transition-colors duration-500"></div>
-                                        
+
                                         <div className="flex flex-col sm:flex-row items-start gap-6">
                                             <Avatar className="h-24 w-24 border-4 border-white shadow-xl group-hover:-translate-y-2 transition-transform duration-500">
                                                 <AvatarImage src={k.img_url} className="object-cover" />
-                                                <AvatarFallback className="bg-slate-900 text-white font-black text-2xl">{k.name.substring(0,2).toUpperCase()}</AvatarFallback>
+                                                <AvatarFallback className="bg-slate-900 text-white font-black text-2xl">{k.name.substring(0, 2).toUpperCase()}</AvatarFallback>
                                             </Avatar>
                                             <div className="pt-2">
                                                 <div className="flex justify-between items-start">
@@ -252,63 +285,104 @@ export default function Kapster() {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-bold text-slate-700 mb-1">Nama Kapster</label>
-                                    <input required type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-800 outline-none" placeholder="Cth: Bang Rian" />
+                                    <input required type="text" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-800 outline-none" placeholder="Cth: Bang Rian" />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-bold text-slate-700 mb-1">Spesialisasi</label>
-                                    <input required type="text" value={formData.specialty} onChange={e => setFormData({...formData, specialty: e.target.value})} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-800 outline-none" placeholder="Cth: Senior Barber" />
+                                    <input required type="text" value={formData.specialty} onChange={e => setFormData({ ...formData, specialty: e.target.value })} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-800 outline-none" placeholder="Cth: Senior Barber" />
                                 </div>
                             </div>
-                            
+
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-bold text-slate-700 mb-1">Pengalaman</label>
-                                    <input type="text" value={formData.experience} onChange={e => setFormData({...formData, experience: e.target.value})} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-800 outline-none" placeholder="Cth: 5 Tahun" />
+                                    <input type="text" value={formData.experience} onChange={e => setFormData({ ...formData, experience: e.target.value })} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-800 outline-none" placeholder="Cth: 5 Tahun" />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-bold text-slate-700 mb-1">Foto Kapster (Opsional)</label>
-                                    <input 
-                                        type="file" 
+                                    <input
+                                        type="file"
                                         accept="image/*"
-                                        onChange={e => setImageFile(e.target.files[0])} 
-                                        className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-800 outline-none" 
+                                        onChange={e => setImageFile(e.target.files[0])}
+                                        className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-800 outline-none"
                                     />
                                     {formData.img_url && !imageFile && (
-                                      <div className="mt-2 text-xs text-green-600 flex items-center gap-1">Foto saat ini: {formData.img_url.substring(0, 30)}...</div>
+                                        <div className="mt-2 text-xs text-green-600 flex items-center gap-1">Foto saat ini: {formData.img_url.substring(0, 30)}...</div>
                                     )}
                                     {imageFile && (
-                                      <div className="mt-2 text-xs text-blue-600 flex items-center gap-1">Foto baru dipilih: {imageFile.name}</div>
+                                        <div className="mt-2 text-xs text-blue-600 flex items-center gap-1">Foto baru dipilih: {imageFile.name}</div>
                                     )}
                                 </div>
                             </div>
 
                             <div>
                                 <label className="block text-sm font-bold text-slate-700 mb-1">Deskripsi Singkat</label>
-                                <textarea rows="2" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-800 outline-none resize-none" placeholder="Spesialis potongan Fade..." />
+                                <textarea rows="2" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-800 outline-none resize-none" placeholder="Spesialis potongan Fade..." />
                             </div>
 
                             <hr className="my-2 border-slate-100" />
                             <h3 className="font-bold text-slate-800">Jadwal & Layanan</h3>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="flex flex-col gap-4">
                                 <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-1">Hari Shift</label>
-                                    <input type="text" value={formData.shift_days} onChange={e => setFormData({...formData, shift_days: e.target.value})} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-800 outline-none" placeholder="Cth: Senin - Rabu" />
+                                    <div className="flex justify-between items-center mb-1">
+                                        <label className="block text-sm font-bold text-slate-700">Hari Shift</label>
+                                        <label className="flex items-center gap-2 cursor-pointer bg-slate-100 px-3 py-1 rounded-lg hover:bg-slate-200 transition-colors">
+                                            <input type="checkbox" checked={isEveryday} onChange={e => {
+                                                setIsEveryday(e.target.checked);
+                                                if (e.target.checked) {
+                                                    setStartDay('Senin');
+                                                    setEndDay('Minggu');
+                                                }
+                                            }} className="w-4 h-4 text-slate-900 border-gray-300 rounded focus:ring-slate-900" />
+                                            <span className="text-xs font-bold text-slate-600">Setiap Hari</span>
+                                        </label>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <select value={startDay} onChange={e => {
+                                            setStartDay(e.target.value);
+                                            setIsEveryday(false);
+                                        }} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-800 outline-none">
+                                            {['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'].map(d => <option key={`start-${d}`} value={d}>{d}</option>)}
+                                        </select>
+                                        <select value={endDay} onChange={e => {
+                                            setEndDay(e.target.value);
+                                            setIsEveryday(false);
+                                        }} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-800 outline-none">
+                                            {['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'].filter(d => d !== startDay).map(d => <option key={`end-${d}`} value={d}>{d}</option>)}
+                                        </select>
+                                    </div>
                                 </div>
+                                
                                 <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-1">Jam Shift</label>
-                                    <input type="text" value={formData.shift_hours} onChange={e => setFormData({...formData, shift_hours: e.target.value})} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-800 outline-none" placeholder="Cth: 10:00 - 20:00 WIB" />
+                                    <label className="block text-sm font-bold text-slate-700 mb-1">Jam Shift (Mulai - Selesai)</label>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <select value={startTime} onChange={e => {
+                                            setStartTime(e.target.value);
+                                            if (parseInt(endTime) <= parseInt(e.target.value)) {
+                                                const nextHour = parseInt(e.target.value) + 1;
+                                                setEndTime(`${nextHour < 10 ? '0' : ''}${nextHour}:00`);
+                                            }
+                                        }} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-800 outline-none">
+                                            {['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00'].map(t => <option key={`start-${t}`} value={t}>{t}</option>)}
+                                        </select>
+                                        <select value={endTime} onChange={e => setEndTime(e.target.value)} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-800 outline-none">
+                                            {['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00']
+                                                .filter(t => parseInt(t) > parseInt(startTime))
+                                                .map(t => <option key={`end-${t}`} value={t}>{t}</option>)}
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-bold text-slate-700 mb-1">Layanan (Pisahkan koma)</label>
-                                    <input type="text" value={formData.services} onChange={e => setFormData({...formData, services: e.target.value})} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-800 outline-none" placeholder="Cth: Signature Cut, Fade" />
+                                    <input type="text" value={formData.services} onChange={e => setFormData({ ...formData, services: e.target.value })} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-800 outline-none" placeholder="Cth: Signature Cut, Fade" />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-bold text-slate-700 mb-1">Tarif Mulai Dari (Rp)</label>
-                                    <input type="number" value={formData.base_price} onChange={e => setFormData({...formData, base_price: e.target.value})} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-800 outline-none" placeholder="Cth: 75000" />
+                                    <input type="number" value={formData.base_price} onChange={e => setFormData({ ...formData, base_price: e.target.value })} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-slate-800 outline-none" placeholder="Cth: 75000" />
                                 </div>
                             </div>
 
