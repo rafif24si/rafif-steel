@@ -27,6 +27,7 @@ export default function RegisterMember() {
     setRegisterError('');
   };
 
+  // KOMENTAR DEMO: Menangani proses pendaftaran (Sign up). Fungsi ini mendaftarkan akun baru dengan role 'customer' ke database.
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (formData.password !== formData.confirmPassword) {

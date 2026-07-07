@@ -1,6 +1,7 @@
 import React from 'react';
 import { FaCut } from 'react-icons/fa';
 
+// KOMENTAR DEMO: Komponen UI re-usable untuk menampilkan layar antarmuka memuat (Loading Screen) dengan animasi CSS kustom (seperti gunting bergerak).
 export default function Loading() {
     return (
         <div className="flex flex-col justify-center items-center min-h-screen bg-slate-50 font-sans px-4">

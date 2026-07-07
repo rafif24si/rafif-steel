@@ -30,6 +30,7 @@ export default function Kapster() {
         fetchKapsters();
     }, []);
 
+    // KOMENTAR DEMO: Mengambil seluruh data kapster/barber dari tabel 'kapsters' di Supabase, diurutkan dari yang terbaru
     const fetchKapsters = async () => {
         setIsLoading(true);
         const { data, error } = await supabase.from('kapsters').select('*').order('created_at', { ascending: false });
@@ -37,12 +38,14 @@ export default function Kapster() {
         setIsLoading(false);
     };
 
+    // KOMENTAR DEMO: Fungsi ini digunakan untuk Menyimpan data baru ATAU Mengupdate data kapster yang sudah ada
     const handleSave = async (e) => {
         e.preventDefault();
         setIsUploading(true);
         try {
             let uploadedUrl = formData.img_url;
 
+            // KOMENTAR DEMO: Jika user mengupload foto baru, foto tersebut akan disimpan ke Storage Supabase terlebih dahulu
             if (imageFile) {
                 const fileExt = imageFile.name.split('.').pop();
                 const fileName = `kapsters/${Math.random()}.${fileExt}`;
@@ -53,6 +56,7 @@ export default function Kapster() {
 
                 if (uploadError) throw uploadError;
 
+                // KOMENTAR DEMO: Setelah berhasil diupload, kita ambil URL publik dari foto tersebut untuk disimpan ke database
                 const { data } = supabase.storage.from('products').getPublicUrl(fileName);
                 uploadedUrl = data.publicUrl;
             }
@@ -126,6 +130,7 @@ export default function Kapster() {
         setIsModalOpen(true);
     };
 
+    // KOMENTAR DEMO: Fungsi untuk menghapus data kapster berdasarkan ID-nya dari database Supabase
     const handleDelete = async (id) => {
         if (window.confirm("Yakin ingin menghapus kapster ini?")) {
             await supabase.from('kapsters').delete().eq('id', id);

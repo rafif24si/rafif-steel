@@ -1,5 +1,6 @@
 import React, { forwardRef } from 'react';
 
+// KOMENTAR DEMO: Komponen UI re-usable untuk kolom input form. Menggunakan 'forwardRef' agar referensi DOM bisa diteruskan langsung ke elemen <input> (contohnya saat ingin memberi fokus otomatis).
 const InputField = forwardRef(({ label, name, type = "text", value, onChange, placeholder, required = false }, ref) => {
   return (
     <div className="mb-4">

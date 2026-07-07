@@ -103,6 +103,7 @@ export default function Booking() {
   }, [navigate]);
 
   // Fetch booked times for selected kapster and date
+  // KOMENTAR DEMO: Mengambil jadwal/waktu yang sudah di-booking orang lain pada tanggal dan kapster yang dipilih, agar slot waktunya tidak bisa dipilih lagi.
   useEffect(() => {
     const fetchBookedTimes = async () => {
       if (step === 3 && bookingData.date && bookingData.kapster) {
@@ -264,6 +265,7 @@ export default function Booking() {
     setBookingData({ ...bookingData, date: selectedDateStr, time: null });
   };
 
+  // KOMENTAR DEMO: Mengecek ke database apakah kode promo yang dimasukkan valid/aktif. Jika ya, hitung potongan harga dan simpan statenya.
   const handleApplyPromo = async (codeToApply = promoCodeInput) => {
     if (!codeToApply) return;
     setIsPromoLoading(true);
@@ -304,6 +306,7 @@ export default function Booking() {
     }
   };
 
+  // KOMENTAR DEMO: Proses Submit Booking. Menyimpan data pemesanan ke tabel 'haircut_bookings' beserta harga akhir (setelah dipotong promo jika ada).
   const handleSubmit = async () => {
     setIsSubmitting(true);
     const finalHarga = appliedPromo ? Math.max(0, bookingData.price - appliedPromo.discountAmount) : bookingData.price;

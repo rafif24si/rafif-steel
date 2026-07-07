@@ -1,4 +1,5 @@
 import Button from "./Button";
+// KOMENTAR DEMO: Komponen UI re-usable untuk bagian Banner Utama/Spanduk (Hero Section) di halaman depan, lengkap dengan tombol Call-to-Action (Mulai).
 export default function HeroSection({ title, subtitle, ctaText, onCtaClick }) {
   return (
     <div className="relative bg-slate-900 text-white py-20 px-4 rounded-3xl overflow-hidden">

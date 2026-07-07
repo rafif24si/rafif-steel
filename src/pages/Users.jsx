@@ -20,6 +20,7 @@ export default function Users() {
     loadUsers();
   }, []);
 
+  // KOMENTAR DEMO: Mengambil daftar pengguna dari tabel 'users' Supabase, kemudian mengurutkannya agar admin tampil paling atas
   const loadUsers = async () => {
     setIsLoading(true);
     try {
@@ -39,6 +40,7 @@ export default function Users() {
     }
   };
 
+  // KOMENTAR DEMO: Fungsi untuk menghapus akun pengguna berdasarkan ID
   const handleDelete = async (id, name) => {
     if (!window.confirm(`Yakin ingin menghapus akun ${name}?`)) return;
     setIsLoading(true);
@@ -62,6 +64,7 @@ export default function Users() {
     setEditData({ ...editData, [e.target.name]: e.target.value });
   };
 
+  // KOMENTAR DEMO: Fungsi untuk menyimpan perubahan data pengguna yang diedit (misal: mengganti nama atau role)
   const handleSaveEdit = async () => {
     if (!editData.name.trim()) {
       alert("Nama tidak boleh kosong!");

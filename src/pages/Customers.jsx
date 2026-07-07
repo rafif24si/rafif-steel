@@ -23,6 +23,7 @@ export default function Customers() {
     fetchCustomers();
   }, []);
 
+  // KOMENTAR DEMO: Mengambil daftar pelanggan (customers) dari database Supabase melalui view 'customers_view'
   const fetchCustomers = async () => {
     setIsLoading(true);
     try {
@@ -44,7 +45,7 @@ export default function Customers() {
     }
   }, [isModalOpen]); 
 
-  // Fungsi Tambah Data
+  // KOMENTAR DEMO: Fungsi untuk menambahkan data pelanggan baru ke dalam database tabel 'users' dengan role customer
   const handleAddClient = async (e) => {
     e.preventDefault();
     if (!newClient.name.trim() || !newClient.email.trim()) {
@@ -97,7 +98,7 @@ export default function Customers() {
     return <FaStar className="text-slate-400" />;
   };
 
-  // Filter pencarian berdasarkan nama, email, atau nomor HP
+  // KOMENTAR DEMO: Filter pencarian pelanggan. Kode ini menyaring data berdasarkan ketikan pada kolom pencarian (cocok dengan nama, email, atau no HP)
   const filteredCustomers = customers.filter(cust => 
     (cust.name && cust.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (cust.email && cust.email.toLowerCase().includes(searchTerm.toLowerCase())) ||

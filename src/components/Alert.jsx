@@ -1,5 +1,6 @@
 import { FaInfoCircle, FaCheckCircle, FaExclamationTriangle, FaTimesCircle } from "react-icons/fa";
 
+// KOMENTAR DEMO: Komponen UI re-usable untuk menampilkan pesan Notifikasi/Alert (Peringatan, Sukses, Error) lengkap dengan ikon yang menyesuaikan otomatis.
 export default function Alert({ type = "info", message, onClose }) {
   const config = {
     info: { icon: FaInfoCircle, bg: "bg-blue-50", text: "text-blue-800", border: "border-blue-200" },

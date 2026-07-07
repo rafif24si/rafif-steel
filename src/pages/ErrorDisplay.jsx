@@ -5,6 +5,7 @@ import ErrorPage from '../components/ErrorPages';
 const ErrorDisplay = () => {
   const { code } = useParams();
 
+  // KOMENTAR DEMO: Mengatur konten dinamis (judul, pesan, animasi Lottie) berdasarkan kode error HTTP (seperti 400, 401, 403, 404) yang ditangkap dari URL parameters.
   // Konfigurasi dinamis sesuai desain Meta-Lost Figma
   const dataError = {
     '400': {

@@ -1,6 +1,6 @@
 
 import React from 'react';
-
+// KOMENTAR DEMO: Komponen PageHeader untuk menjaga konsistensi desain bagian atas halaman (Judul, Breadcrumb/Jejak navigasi, dan tombol aksi tambahan).
 export default function PageHeader({ title, breadcrumb, children }) {
     // Mengecek apakah breadcrumb array atau string
     const displayBreadcrumb = Array.isArray(breadcrumb) 

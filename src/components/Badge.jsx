@@ -1,3 +1,4 @@
+// KOMENTAR DEMO: Komponen UI re-usable untuk Label/Badge (biasanya digunakan untuk menampilkan status seperti Aktif/Tidak Aktif/Proses dengan warna berbeda).
 export default function Badge({ children, type = "primary" }) {
   const types = {
     primary: "bg-blue-100 text-blue-800",

@@ -169,6 +169,7 @@ export default function Dashboard() {
 
     const timer = setInterval(() => setCurrentTime(new Date()), 60000);
 
+    // KOMENTAR DEMO: Mengambil data dari tabel pesanan jasa dan pesanan produk secara bersamaan untuk dikalkulasi menjadi statistik dashboard
     const fetchData = async () => {
       try {
         const [bookingsRes, ordersRes] = await Promise.all([
@@ -179,6 +180,7 @@ export default function Dashboard() {
         const bookings = bookingsRes.data || [];
         const orders = ordersRes.data || [];
 
+        // KOMENTAR DEMO: Bagian ini menghitung total pendapatan (revenue) dari pesanan yang sudah berstatus 'Selesai' atau 'Dibayar'
         // 1. Top Summary Cards
         let totalRev = 0;
         let apps = bookings.length;
@@ -240,6 +242,7 @@ export default function Dashboard() {
         const calculatedScore = Math.min(Math.round((totalTransactions / monthlyTarget) * 100), 100);
         setPerformanceScore(calculatedScore);
 
+        // KOMENTAR DEMO: Menyiapkan data agregasi untuk grafik/chart bar (menghitung total pemasukan per masing-masing jenis layanan)
         // 3. Secondary Analytics - Bar Chart
         const svcMap = {};
         bookings.forEach(b => {

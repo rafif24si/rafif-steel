@@ -1,3 +1,4 @@
+// KOMENTAR DEMO: Komponen UI re-usable untuk dropdown pilihan (select). Menerima array 'options' untuk di-mapping secara dinamis menjadi daftar <option>.
 export default function SelectField({ label, name, value, onChange, options = [] }) {
   return (
     <div className="mb-4">

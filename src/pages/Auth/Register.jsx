@@ -21,6 +21,7 @@ export default function Register() {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
+    // KOMENTAR DEMO: Menangani proses pembuatan akun baru (Sign Up). Mengirim data (nama, email, password, role) ke Supabase (usersAPI) untuk disimpan ke database.
     // Fungsi yang BENAR untuk mengirim ke Supabase
     const handleRegister = async (e) => {
         e.preventDefault();

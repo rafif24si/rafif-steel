@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FaCut, FaRedo, FaHome } from 'react-icons/fa';
 
+// KOMENTAR DEMO: Komponen UI re-usable khusus untuk menampilkan Halaman Error interaktif. Memiliki efek background partikel bergerak dan parallax kursor.
 const ErrorPage = ({ kodeError = "404", deskripsiError }) => {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [particles, setParticles] = useState([]);

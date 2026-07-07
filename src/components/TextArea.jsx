@@ -1,3 +1,4 @@
+// KOMENTAR DEMO: Komponen UI re-usable untuk input teks multi-baris (textarea). Biasanya digunakan untuk form alamat atau deskripsi produk.
 export default function TextArea({ label, name, value, onChange, rows = 3, placeholder }) {
   return (
     <div className="mb-4">

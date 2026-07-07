@@ -13,6 +13,7 @@ export default function Register() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  // KOMENTAR DEMO: Simulasi fungsi registrasi sederhana (tanpa integrasi database) yang akan mengarahkan user ke halaman login setelah 1.5 detik
   const handleSubmit = (e) => {
     e.preventDefault();
     setIsSubmitting(true);

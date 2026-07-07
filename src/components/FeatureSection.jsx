@@ -1,4 +1,5 @@
 import Card from "./Card";
+// KOMENTAR DEMO: Komponen UI re-usable untuk menampilkan deretan keunggulan fitur/layanan dengan tata letak Grid (berjejer).
 export default function FeatureSection({ features }) {
   return (
     <div className="py-12">

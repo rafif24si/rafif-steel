@@ -1,3 +1,4 @@
+// KOMENTAR DEMO: Komponen UI re-usable untuk pembungkus Tabel (Table Wrapper) agar tampilan baris judul (thead) dan warna seragam di seluruh halaman data.
 export default function Table({ headers, children }) {
   return (
     <div className="overflow-x-auto">

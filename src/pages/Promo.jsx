@@ -21,6 +21,7 @@ export default function Promo() {
     fetchPromos();
   }, []);
 
+  // KOMENTAR DEMO: Mengambil daftar semua kode promo dari tabel 'promos'
   const fetchPromos = async () => {
     setIsLoading(true);
     const { data, error } = await supabase.from('promos').select('*').order('created_at', { ascending: false });
@@ -28,6 +29,7 @@ export default function Promo() {
     setIsLoading(false);
   };
 
+  // KOMENTAR DEMO: Fungsi untuk menyimpan atau memperbarui data promo ke database Supabase
   const handleSave = async (e) => {
     e.preventDefault();
     try {
@@ -80,6 +82,7 @@ export default function Promo() {
     setIsModalOpen(true);
   };
 
+  // KOMENTAR DEMO: Menyaring daftar promo yang tampil berdasarkan kata kunci (bisa mencari dari nama promo atau kode vouchernya)
   const filteredPromos = promos.filter(p => 
     p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     p.code.toLowerCase().includes(searchTerm.toLowerCase())

@@ -5,6 +5,7 @@ import { FaCommentDots, FaTimes, FaPaperPlane, FaCut } from "react-icons/fa";
 // Anda bisa mengganti URL logo ini dengan logo ikon gunting/barbershop Anda nanti
 const AI_LOGO_URL = "https://i.ibb.co.com/TxSKgNWK/Logo-SAHAJA-AI.png";
 
+// KOMENTAR DEMO: Komponen kompleks Chatbot (Floating Chat) yang melayang di pojok layar. Memiliki fitur deteksi warna latar untuk mengubah ikon dan fungsi chat AI interaktif via API.
 export default function FloatingChat() {
   const [isOpen, setIsOpen] = useState(false);
   const [isWhiteTheme, setIsWhiteTheme] = useState(true); // State untuk warna tema tombol (putih jika di hero atau dark section)

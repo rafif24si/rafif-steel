@@ -2,6 +2,7 @@ import Card from "./Card";
 import Badge from "./Badge";
 import Button from "./Button";
 
+// KOMENTAR DEMO: Komponen khusus untuk menampilkan data produk ke dalam bentuk Kartu. Menggabungkan penggunaan komponen Card, Badge, dan Button secara bersamaan.
 export default function ProductCard({ image, title, category, price, description, onDetail }) {
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow">

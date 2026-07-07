@@ -24,6 +24,7 @@ export default function Products() {
     fetchProducts();
   }, []);
 
+  // KOMENTAR DEMO: Mengambil seluruh data inventory produk dari tabel 'products' di Supabase, diurutkan dari yang terbaru
   const fetchProducts = async () => {
     setIsLoading(true);
     const { data, error } = await supabase.from('products').select('*').order('created_at', { ascending: false });
@@ -31,6 +32,7 @@ export default function Products() {
     setIsLoading(false);
   };
 
+  // KOMENTAR DEMO: Fungsi untuk menyimpan produk baru atau menyimpan perubahan produk (Update). Jika ada gambar, gambar akan diupload ke Storage terlebih dahulu.
   const handleSave = async (e) => {
     e.preventDefault();
     setIsUploading(true);
@@ -112,6 +114,7 @@ export default function Products() {
     setIsModalOpen(true);
   };
 
+  // KOMENTAR DEMO: Filter pencarian produk. Data yang tampil disaring berdasarkan nama atau kategori/tipe produk sesuai ketikan di kolom pencarian.
   const filteredProducts = products.filter(p => 
     p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
     (p.type && p.type.toLowerCase().includes(searchTerm.toLowerCase()))

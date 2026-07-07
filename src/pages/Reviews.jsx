@@ -12,6 +12,7 @@ export default function Reviews() {
     fetchReviews();
   }, []);
 
+  // KOMENTAR DEMO: Mengambil daftar seluruh ulasan pelanggan dari tabel 'haircut_reviews', diurutkan dari ulasan yang paling baru
   const fetchReviews = async () => {
     setIsLoading(true);
     try {
@@ -29,6 +30,7 @@ export default function Reviews() {
     }
   };
 
+  // KOMENTAR DEMO: Menghapus ulasan tertentu dari database
   const handleDelete = async (id) => {
     if (!window.confirm("Apakah Anda yakin ingin menghapus ulasan ini?")) return;
     

@@ -44,6 +44,7 @@ export default function Orders() {
   const fetchOrders = async () => {
     setIsLoading(true);
     try {
+      // KOMENTAR DEMO: Mengambil data dari dua tabel sekaligus: haircut_bookings (pesanan jasa) dan product_orders (pesanan barang)
       const { data: bookings, error: err1 } = await supabase.from('haircut_bookings').select('*');
       const { data: products, error: err2 } = await supabase.from('product_orders').select('*');
 
@@ -77,6 +78,7 @@ export default function Orders() {
         }))];
       }
 
+      // KOMENTAR DEMO: Setelah data digabungkan, kita urutkan dari pesanan yang paling terbaru berdasarkan waktu (descending)
       combined.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       setOrders(combined);
     } catch (error) {
@@ -180,6 +182,7 @@ export default function Orders() {
     document.body.removeChild(link);
   };
 
+  // KOMENTAR DEMO: Filter gabungan. Kode ini menyaring (filter) data pesanan berdasarkan apa yang diketik di kotak Search (nama atau ID) DAN apa yang dipilih di Dropdown filter layanan.
   const filteredOrders = orders.filter(o => {
     const matchesSearch = o.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       o.id.toLowerCase().includes(searchTerm.toLowerCase());
@@ -190,6 +193,7 @@ export default function Orders() {
     return matchesSearch && cleanServiceName === selectedFilter;
   });
 
+  // KOMENTAR DEMO: Kode ini membuat list unik (tidak boleh ada yang ganda) dari semua jenis layanan/produk untuk ditampilkan sebagai opsi pilihan pada Dropdown Filter.
   const uniqueItems = Array.from(new Set(orders.map(o => o.service.replace(/\[(Booking|Produk)\] /g, '')))).sort();
 
   return (

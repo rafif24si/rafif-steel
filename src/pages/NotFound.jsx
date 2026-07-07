@@ -10,6 +10,7 @@ export default function NotFound() {
     const [countdown, setCountdown] = useState(10);
     const [isGlitching, setIsGlitching] = useState(false);
 
+    // KOMENTAR DEMO: Mengatur efek animasi maskot hantu (Ghost) agar terlihat bergerak secara interaktif (mengubah posisi) setiap 500ms
     // Efek hantu bergerak-gerak (interaktif)
     useEffect(() => {
         const interval = setInterval(() => {
@@ -18,6 +19,7 @@ export default function NotFound() {
         return () => clearInterval(interval);
     }, []);
 
+    // KOMENTAR DEMO: Mengatur timer hitung mundur (countdown). Jika mencapai 0, pengguna akan diarahkan kembali secara otomatis ke Beranda (Landing Page).
     // Countdown auto-redirect (interaktif & memberi rasa urgency)
     useEffect(() => {
         if (countdown <= 0) {

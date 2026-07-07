@@ -39,6 +39,7 @@ export default function ProductDetail() {
   const [product, setProduct] = useState(null);
 
   useEffect(() => {
+    // KOMENTAR DEMO: Mengambil ID produk dari URL, lalu mencari datanya di array/database untuk ditampilkan secara lengkap di halaman ini
     // 2. MENGAMBIL DATA DARI ARRAY LOKAL, BUKAN DARI API DUMMYJSON
     const foundProduct = barbershopProducts.find((p) => p.id === id);
     if (foundProduct) {

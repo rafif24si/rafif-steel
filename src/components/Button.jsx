@@ -1,3 +1,4 @@
+// KOMENTAR DEMO: Komponen UI re-usable untuk Tombol (Button). Memiliki konfigurasi gaya (types) bawaan seperti primary, secondary, success, danger, agar tampilan tombol seragam di semua halaman.
 export default function Button({ children, type = "primary", className = "", onClick, disabled = false }) {
   const types = {
     primary: "bg-blue-600 hover:bg-blue-700 text-white",

@@ -15,7 +15,7 @@ export default function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate(); // INISIALISASI useNavigate
 
-  // Mengambil data user dari localStorage
+  // KOMENTAR DEMO: Mengambil data user dari localStorage agar informasi profil admin yang login (nama & email) bisa ditampilkan di Sidebar secara dinamis.
   const [userData, setUserData] = useState({ name: 'Admin User', email: 'admin@haircut.id' });
 
   useEffect(() => {
@@ -68,6 +68,7 @@ export default function Sidebar() {
     }
   ];
 
+  // KOMENTAR DEMO: Menangani proses Logout. Menghapus data kredensial/sesi admin dari localStorage dan mengembalikan pengguna ke halaman utama (Landing Page).
   // FUNGSI LOGOUT YANG SUDAH DIPERBAIKI
   const handleLogout = () => {
     // 1. Menghapus data sesi (user) yang tersimpan saat login

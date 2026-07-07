@@ -2,6 +2,7 @@ import React from 'react';
 import { FaRegBell, FaSearch, FaHistory, FaRegSun } from "react-icons/fa";
 import { FiSidebar } from "react-icons/fi";
 
+// KOMENTAR DEMO: Komponen UI re-usable untuk bagian navigasi atas (Top Bar/Header) di dashboard admin. Berisi kotak pencarian (search) dan ikon notifikasi.
 export default function Header() {
     return (
         <div id="header-container" className="flex justify-between items-center py-4 px-8 bg-[#F7F9FB] border-b border-gray-100 font-sans" style={{ fontFamily: "'Inter', sans-serif" }}>

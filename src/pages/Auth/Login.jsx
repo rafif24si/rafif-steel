@@ -19,6 +19,7 @@ export default function Login() {
         setCredentials({ ...credentials, [e.target.name]: e.target.value });
     };
 
+    // KOMENTAR DEMO: Menangani proses validasi form Login Admin. Memanggil fungsi Supabase (usersAPI) untuk mencocokkan email & password, lalu menyimpannya di localStorage sebelum diarahkan ke Dashboard.
     const handleLogin = async (e) => {
         e.preventDefault();
         try {

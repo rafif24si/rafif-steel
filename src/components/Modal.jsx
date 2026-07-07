@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import Button from "./Button";
-
+// KOMENTAR DEMO: Komponen Modal yang reusable (bisa dipakai berulang). Komponen ini mengatur tampilan popup dan memblokir scroll di belakang layar (body overflow hidden) saat sedang terbuka.
 export default function Modal({ isOpen, onClose, title, children }) {
   useEffect(() => {
     if (isOpen) document.body.style.overflow = "hidden";

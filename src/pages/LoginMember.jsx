@@ -26,6 +26,7 @@ export default function LoginMember() {
     setLoginError('');
   };
 
+  // KOMENTAR DEMO: Menangani proses pengiriman formulir Login. Fungsi ini memanggil fungsi loginUser dari usersAPI untuk memverifikasi email dan password.
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);

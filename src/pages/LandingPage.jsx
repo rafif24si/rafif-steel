@@ -13,6 +13,7 @@ import {
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { supabase } from "../lib/supabaseClient";
 
+// KOMENTAR DEMO: Custom Hook (fungsi buatan sendiri) untuk membuat efek angka yang menghitung naik (count up) secara animasi.
 // ============ CUSTOM HOOKS ============
 const useCountUp = (end, duration = 2000, startCounting = false) => {
   const [count, setCount] = useState(0);
@@ -31,6 +32,7 @@ const useCountUp = (end, duration = 2000, startCounting = false) => {
   return count;
 };
 
+// KOMENTAR DEMO: Komponen pembungkus (Wrapper) yang memberikan efek muncul perlahan (fade-in) saat elemen mulai terlihat di layar pengguna saat di-scroll (IntersectionObserver).
 // ============ ANIMASI SCROLL ============
 const FadeInSection = ({ children, delay = 0, className = "", direction = "up", duration = 800 }) => {
   const [isVisible, setVisible] = useState(false);

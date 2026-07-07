@@ -57,6 +57,7 @@ export default function MemberDashboard() {
     }
   };
 
+  // KOMENTAR DEMO: Bagian ini menangani penarikan data (fetch) riwayat booking, pesanan produk, klaim reward, dan voucher milik member yang sedang login dari database Supabase
   // ==========================================
   // DATA FETCHING DARI SUPABASE
   // ==========================================
@@ -70,6 +71,7 @@ export default function MemberDashboard() {
   const [loyaltyData, setLoyaltyData] = useState({ points: 0, totalTransactions: 0, tier: 'Bronze' });
   const [isLoading, setIsLoading] = useState(true);
 
+  // KOMENTAR DEMO: Fungsi untuk menghitung poin loyalitas (Loyalty Points) dan level keanggotaan (Tier: Bronze/Silver/Gold/Platinum) berdasarkan total transaksi yang sudah berstatus 'Selesai'
   const calculateLoyalty = (bookings, orders, claims) => {
     const completedBookings = bookings.filter(b => b.status === 'Selesai').map(b => ({
       date: new Date(b.created_at || b.tanggal || new Date()),

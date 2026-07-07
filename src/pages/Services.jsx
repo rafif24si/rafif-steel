@@ -19,6 +19,7 @@ export default function Services() {
         fetchServices();
     }, []);
 
+    // KOMENTAR DEMO: Mengambil daftar layanan dari database Supabase, diurutkan berdasarkan waktu pembuatan
     const fetchServices = async () => {
         setIsLoading(true);
         const { data, error } = await supabase.from('services').select('*').order('created_at', { ascending: true });
@@ -26,6 +27,7 @@ export default function Services() {
         setIsLoading(false);
     };
 
+    // KOMENTAR DEMO: Fungsi untuk menyimpan layanan baru atau memperbarui data layanan yang diedit (Update & Insert)
     const handleSave = async (e) => {
         e.preventDefault();
         try {
@@ -69,6 +71,7 @@ export default function Services() {
         setIsModalOpen(true);
     };
 
+    // KOMENTAR DEMO: Fungsi untuk menghapus layanan dari database berdasarkan ID
     const handleDelete = async (id) => {
         if (window.confirm("Yakin ingin menghapus layanan ini?")) {
             const { error } = await supabase.from('services').delete().eq('id', id);

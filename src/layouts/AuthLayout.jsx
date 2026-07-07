@@ -1,5 +1,6 @@
 import { Outlet, useLocation, Link } from "react-router-dom";
 
+// KOMENTAR DEMO: Layout khusus untuk halaman Otentikasi (Login & Register). Mengatur tampilan latar belakang (background) dan bingkai desain (Card) yang sama. Komponen spesifik akan dirender di bagian <Outlet />.
 export default function AuthLayout() {
     // Mendapatkan lokasi path saat ini untuk mengubah teks secara dinamis (Login/Register)
     const location = useLocation();
