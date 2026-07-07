@@ -15,6 +15,26 @@ export default function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate(); // INISIALISASI useNavigate
 
+  // Mengambil data user dari localStorage
+  const [userData, setUserData] = useState({ name: 'Admin User', email: 'admin@haircut.id' });
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      try {
+        const parsed = JSON.parse(storedUser);
+        setUserData({
+          name: parsed.nama || parsed.username || parsed.email || 'Admin User',
+          email: parsed.email || 'admin@haircut.id'
+        });
+      } catch (e) {
+        console.error("Error parsing user data", e);
+      }
+    }
+  }, []);
+
+  const userInitial = userData.name.charAt(0).toUpperCase();
+
   // Reset animasi saat navigasi
   useEffect(() => {
     setIsAnimating(false);
@@ -238,14 +258,14 @@ export default function Sidebar() {
           <div className={`flex items-center gap-3 px-3 py-3 rounded-2xl bg-gray-50/80 hover:bg-gray-100 transition-all duration-200 ${collapsed ? 'flex-col' : ''}`}>
             {/* Avatar */}
             <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md shadow-violet-200">
-              <span className="text-white text-sm font-bold">A</span>
+              <span className="text-white text-sm font-bold">{userInitial}</span>
             </div>
 
             {/* User Info */}
             {!collapsed && (
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-gray-900 truncate">Admin User</p>
-                <p className="text-xs text-gray-400 truncate">admin@haircut.id</p>
+                <p className="text-sm font-semibold text-gray-900 truncate">{userData.name}</p>
+                <p className="text-xs text-gray-400 truncate">{userData.email}</p>
               </div>
             )}
 
