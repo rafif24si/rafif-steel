@@ -74,8 +74,8 @@ export default function Sidebar() {
     // 1. Menghapus data sesi (user) yang tersimpan saat login
     localStorage.removeItem('user');
 
-    // 2. Mengarahkan pengguna secara paksa ke halaman Landing Page ("/")
-    navigate('/');
+    // 2. Mengarahkan pengguna secara paksa ke halaman Login ("/login")
+    navigate('/login');
   };
 
   const handleToggle = () => {

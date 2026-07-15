@@ -401,6 +401,8 @@ export default function LandingPage() {
   const navigate = useNavigate();
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeTestimonial, setActiveTestimonial] = useState(0);
+  const [userSession, setUserSession] = useState(null);
+  const [userRole, setUserRole] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [isBackToTopWhite, setIsBackToTopWhite] = useState(false);
@@ -430,7 +432,6 @@ export default function LandingPage() {
   const [isProductPromoLoading, setIsProductPromoLoading] = useState(false);
 
   // State untuk Auth & Testimoni
-  const [userSession, setUserSession] = useState(null);
   const [reviewsData, setReviewsData] = useState([]);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [reviewForm, setReviewForm] = useState({ id: null, rating: 5, review: '' });
@@ -515,13 +516,25 @@ export default function LandingPage() {
     window.addEventListener('scroll', handleScroll, { passive: true });
     
     // Autofill email jika user sedang login
-    const savedEmail = localStorage.getItem('userEmail');
+    let savedEmail = localStorage.getItem('userEmail');
+    const userStr = localStorage.getItem('user');
+    let role = null;
+    if (userStr) {
+      try { 
+        const parsed = JSON.parse(userStr);
+        if(!savedEmail) savedEmail = parsed.email;
+        role = parsed.role;
+      } catch (err) {}
+    }
+
     if (savedEmail) {
       setBuyerEmail(savedEmail);
       setBookingWa(savedEmail);
       setUserSession(savedEmail);
+      setUserRole(role);
     } else {
       setUserSession(null);
+      setUserRole(null);
     }
     
     return () => window.removeEventListener('scroll', handleScroll);
@@ -681,7 +694,7 @@ export default function LandingPage() {
     e.preventDefault();
     if (!userSession) {
       alert('Silakan login sebagai member terlebih dahulu untuk mengecek status pesanan.');
-      navigate('/login-member');
+      navigate('/login');
       return;
     }
     if (!bookingWa) {
@@ -696,12 +709,12 @@ export default function LandingPage() {
       const { data: userExists } = await supabase.from('users').select('id').eq('email', emailInput).single();
       if (!userExists) {
         alert("Email tidak terdata");
-        navigate('/register-member');
+        navigate('/register');
         return;
       }
     } catch (err) {
       alert("Email tidak terdata");
-      navigate('/register-member');
+      navigate('/register');
       return;
     }
     
@@ -917,30 +930,17 @@ export default function LandingPage() {
           </div>
 
          <div className="flex items-center gap-3 z-50">
-            {/* Tombol Login Member (Ditambahkan) */}
+            {/* Tombol Login / Dashboard (Dinamis) */}
             <Link 
-              to={userSession ? "/member-dashboard" : "/login-member"} 
+              to={userSession ? (userRole === 'admin' ? '/dashboard' : '/member-dashboard') : "/login"} 
               className={`hidden lg:inline-flex items-center gap-2 px-6 py-2.5 text-xs font-bold rounded-full transition-all duration-500 ease-out hover:-translate-y-0.5 shadow-lg ${
                 isScrolled 
                   ? 'bg-black text-white hover:bg-gray-800' 
                   : 'bg-white text-black hover:bg-gray-200'
               }`}
             >
-              <span>{userSession ? 'Dashboard' : 'Member'}</span>
+              <span>{userSession ? (userRole === 'admin' ? 'Dashboard Admin' : 'Dashboard Member') : 'Login'}</span>
               <FaUserTie className="text-[10px]" />
-            </Link>
-
-            {/* Tombol Login Admin (Diperbarui tampilannya agar beda dengan Member) */}
-            <Link 
-              to="/login" 
-              className={`hidden lg:inline-flex items-center gap-2 px-5 py-2.5 text-xs font-bold rounded-full transition-all duration-500 ease-out hover:-translate-y-0.5 ${
-                isScrolled 
-                  ? 'bg-white text-gray-700 border border-gray-200 hover:border-gray-900 hover:text-black shadow-sm' 
-                  : 'bg-white/10 backdrop-blur-md text-white border border-white/20 hover:bg-white hover:text-black shadow-lg'
-              }`}
-            >
-              <span>Admin</span>
-              <FaShieldAlt className="text-[10px]" />
             </Link>
 
             {/* Tombol Hamburger Mobile */}
@@ -978,19 +978,21 @@ export default function LandingPage() {
               ))}
               <div className="px-2 pt-4 mt-2 border-t border-gray-200 flex flex-col gap-3">
                 <Link 
-                  to={userSession ? "/member-dashboard" : "/login-member"}
+                  to={userSession ? (userRole === 'admin' ? '/dashboard' : '/member-dashboard') : "/login"}
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="flex items-center justify-center gap-2 w-full bg-black text-white font-bold py-4 rounded-2xl shadow-lg hover:bg-gray-800 transition-colors duration-300"
                 >
-                  <FaUserTie className="text-sm" /> {userSession ? 'Dashboard Member' : 'Login Member'}
+                  <FaUserTie className="text-sm" /> {userSession ? (userRole === 'admin' ? 'Dashboard Admin' : 'Dashboard Member') : 'Login'}
                 </Link>
-                <Link 
-                  to="/login"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="flex items-center justify-center gap-2 w-full bg-gray-100 text-gray-800 font-bold py-4 rounded-2xl border border-gray-200 hover:bg-gray-200 transition-colors duration-300"
-                >
-                  <FaShieldAlt className="text-sm" /> Login Admin
-                </Link>
+                {!userSession && (
+                  <Link 
+                    to="/register"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center justify-center gap-2 w-full bg-gray-100 text-gray-800 font-bold py-4 rounded-2xl border border-gray-200 hover:bg-gray-200 transition-colors duration-300"
+                  >
+                    <FaUserTie className="text-sm" /> Register
+                  </Link>
+                )}
               </div>
             </div>
           </div>
@@ -1023,7 +1025,7 @@ export default function LandingPage() {
           <FadeInSection delay={400}>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 w-full px-4 sm:px-0">
               <Link 
-                to={userSession ? "/booking" : "/login-member"} 
+                to={userSession ? "/booking" : "/login"} 
                 state={{ from: '/booking' }}
                 className="group w-full sm:w-auto px-10 py-4 font-bold text-black bg-white rounded-full transition-all duration-500 hover:bg-gray-200 hover:-translate-y-1 flex items-center justify-center gap-3 shadow-[0_0_30px_rgba(255,255,255,0.2)]"
               >
@@ -1102,7 +1104,7 @@ export default function LandingPage() {
                 ))}
               </div>
               <div className="flex gap-3">
-                <Link to="/login-member" className="inline-flex items-center gap-2 px-6 py-3.5 bg-gray-900 text-white font-bold rounded-full hover:bg-black transition-all duration-200 hover:-translate-y-1 shadow-lg text-sm">
+                <Link to="/login" className="inline-flex items-center gap-2 px-6 py-3.5 bg-gray-900 text-white font-bold rounded-full hover:bg-black transition-all duration-200 hover:-translate-y-1 shadow-lg text-sm">
                   Daftar Member <FaArrowRight className="text-xs" />
                 </Link>
               </div>
@@ -1357,7 +1359,7 @@ export default function LandingPage() {
                 if (!userSession) {
                   e.preventDefault();
                   alert('Silakan login sebagai member terlebih dahulu untuk memesan layanan.');
-                  navigate('/login-member');
+                  navigate('/login');
                 }
               }}
               className="flex-1 bg-white text-black font-bold py-3.5 rounded-xl hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
@@ -1415,7 +1417,7 @@ export default function LandingPage() {
                 if (!userSession) {
                   e.preventDefault();
                   alert('Silakan login sebagai member terlebih dahulu untuk memesan layanan.');
-                  navigate('/login-member');
+                  navigate('/login');
                 }
               }}
               className="flex w-full bg-white text-black font-bold py-3.5 rounded-xl hover:bg-gray-200 transition-colors items-center justify-center gap-2"
@@ -1465,7 +1467,7 @@ export default function LandingPage() {
                 onBuy={(product) => {
                   if (!userSession) {
                     alert('Silakan login sebagai member terlebih dahulu untuk membeli produk.');
-                    navigate('/login-member');
+                    navigate('/login');
                     return;
                   }
                   setBuyingProduct(product);
@@ -2154,13 +2156,13 @@ export default function LandingPage() {
                     const { data: userExists } = await supabase.from('users').select('id').eq('email', buyerEmail).single();
                     if (!userExists) {
                       alert("Email tidak terdata");
-                      navigate('/register-member');
+                      navigate('/register');
                       return;
                     }
                     setBuyStep(2);
                   } catch (err) {
                     alert("Email tidak terdata");
-                    navigate('/register-member');
+                    navigate('/register');
                   }
                 } else {
                   handleBuyProduct(e);

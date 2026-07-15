@@ -2,6 +2,7 @@ import React, { Suspense } from "react";
 import "./App.css";
 import { Route, Routes } from "react-router-dom";
 import Loading from "./components/Loading";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 // IMPORT SEMUA HALAMAN 
 const LandingPage = React.lazy(() => import("./pages/LandingPage")); 
@@ -17,8 +18,6 @@ const Users = React.lazy(() => import("./pages/Users"));
 const ErrorDisplay = React.lazy(() => import("./pages/ErrorDisplay"));
 const MainLayout = React.lazy(() => import("./layouts/MainLayout"));
 const AuthLayout = React.lazy(() => import("./layouts/AuthLayout"));
-const Login = React.lazy(() => import("./pages/Auth/Login"));
-const Register = React.lazy(() => import("./pages/Auth/Register"));
 const Forgot = React.lazy(() => import("./pages/Auth/Forget"));
 const Promo = React.lazy(() => import("./pages/Promo"));
 const Reviews = React.lazy(() => import("./pages/Reviews"));
@@ -37,13 +36,26 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         
         {/* RUTE HALAMAN MEMBER & BOOKING (Berdiri Sendiri / Full Screen) */}
-        <Route path="/login-member" element={<LoginMember />} />
-        <Route path="/register-member" element={<RegisterMember />} />
-        <Route path="/member-dashboard" element={<MemberDashboard />} />
-        <Route path="/booking" element={<Booking />} /> {/* <-- DIPINDAH KE SINI */}
+        <Route path="/login" element={<LoginMember />} />
+        <Route path="/register" element={<RegisterMember />} />
+        
+        <Route path="/member-dashboard" element={
+          <ProtectedRoute allowedRoles={['customer']}>
+            <MemberDashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/booking" element={
+          <ProtectedRoute allowedRoles={['customer']}>
+            <Booking />
+          </ProtectedRoute>
+        } />
 
         {/* RUTE DASHBOARD ADMIN (Dibungkus MainLayout agar ada Sidebar) */}
-        <Route element={<MainLayout />}>
+        <Route element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <MainLayout />
+          </ProtectedRoute>
+        }>
           <Route path="/dashboard" element={<Dashboard />} /> 
           <Route path="/orders" element={<Orders />} />
           <Route path="/customers" element={<Customers />} />
@@ -60,8 +72,6 @@ function App() {
         
         {/* RUTE AUTENTIKASI ADMIN & REGISTER */}
         <Route element={<AuthLayout />}>
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
           <Route path="/forgot" element={<Forgot />} />
         </Route>
 

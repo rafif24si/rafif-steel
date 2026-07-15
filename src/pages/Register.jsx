@@ -22,7 +22,7 @@ export default function Register() {
     setTimeout(() => {
       setIsSubmitting(false);
       alert("Akun berhasil dibuat! Silakan login.");
-      navigate('/login-member');
+      navigate('/login');
     }, 1500);
   };
 
@@ -50,7 +50,7 @@ export default function Register() {
 
           <div className="mb-8">
             <h1 className="text-gray-900 text-4xl font-bold tracking-tight mb-3">Create account</h1>
-            <p className="text-gray-500">Sudah punya akun? <Link to="/login-member" className="text-black font-bold hover:underline">Sign in</Link></p>
+            <p className="text-gray-500">Sudah punya akun? <Link to="/login" className="text-black font-bold hover:underline">Sign in</Link></p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">

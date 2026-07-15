@@ -16,8 +16,8 @@ export default function RegisterMember() {
   const [registerError, setRegisterError] = useState('');
 
   React.useEffect(() => {
-    const savedEmail = localStorage.getItem('userEmail');
-    if (savedEmail) {
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
       navigate('/member-dashboard');
     }
   }, [navigate]);
@@ -50,7 +50,7 @@ export default function RegisterMember() {
       await usersAPI.registerUser(payload);
       
       alert("Pendaftaran berhasil! Silakan Sign in.");
-      const redirectTo = location.state?.from || '/login-member';
+      const redirectTo = location.state?.from || '/login';
       navigate(redirectTo);
     } catch (error) {
       console.error("Register failed", error);
@@ -198,7 +198,7 @@ export default function RegisterMember() {
           {/* Footer */}
           <p className="mt-8 text-center text-gray-500 text-sm">
             Already have an account?{' '}
-            <Link to="/login-member" className="text-gray-900 font-semibold hover:underline underline-offset-4">
+            <Link to="/login" className="text-gray-900 font-semibold hover:underline underline-offset-4">
               Sign in
             </Link>
           </p>

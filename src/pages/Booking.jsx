@@ -18,7 +18,14 @@ export default function Booking() {
     date: '', 
     time: null,
     price: 0,
-    email: localStorage.getItem('userEmail') || ''
+    email: (() => {
+      let e = localStorage.getItem('userEmail');
+      const uStr = localStorage.getItem('user');
+      if (uStr && !e) {
+        try { e = JSON.parse(uStr).email; } catch (err) {}
+      }
+      return e || '';
+    })()
   });
 
   const [services, setServices] = useState([]);
@@ -66,9 +73,14 @@ export default function Booking() {
 
   // PROTEKSI ROUTE & FETCH DATA
   useEffect(() => {
-    const userEmail = localStorage.getItem('userEmail');
+    let userEmail = localStorage.getItem('userEmail');
+    const userStr = localStorage.getItem('user');
+    if (userStr && !userEmail) {
+      try { userEmail = JSON.parse(userStr).email; } catch (err) {}
+    }
+
     if (!userEmail) {
-      navigate('/login-member', { state: { from: '/booking' } });
+      navigate('/login', { state: { from: '/booking' } });
       return;
     }
 
@@ -78,13 +90,13 @@ export default function Booking() {
         if (!userExists) {
           localStorage.removeItem('userEmail');
           alert("Email tidak terdata. Silakan login atau register kembali.");
-          navigate('/register-member');
+          navigate('/register');
           return;
         }
       } catch (err) {
         localStorage.removeItem('userEmail');
         alert("Email tidak terdata. Silakan login atau register kembali.");
-        navigate('/register-member');
+        navigate('/register');
         return;
       }
 
@@ -163,14 +175,14 @@ export default function Booking() {
       
       if (!userExists) {
         alert("Email tidak terdata");
-        navigate('/register-member');
+        navigate('/register');
         return;
       }
       
       nextStep();
     } catch (error) {
       alert("Email tidak terdata");
-      navigate('/register-member');
+      navigate('/register');
     }
   };
 

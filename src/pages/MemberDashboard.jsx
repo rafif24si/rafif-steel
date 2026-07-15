@@ -31,6 +31,7 @@ export default function MemberDashboard() {
   const handleLogout = () => {
     localStorage.removeItem('userEmail');
     localStorage.removeItem('userName');
+    localStorage.removeItem('user');
     navigate('/');
   };
 
@@ -113,11 +114,20 @@ export default function MemberDashboard() {
   };
 
   useEffect(() => {
-    const email = localStorage.getItem('userEmail');
-    const name = localStorage.getItem('userName');
+    let email = localStorage.getItem('userEmail');
+    let name = localStorage.getItem('userName');
+    const userStr = localStorage.getItem('user');
+    
+    if (userStr) {
+      try {
+        const userObj = JSON.parse(userStr);
+        email = email || userObj.email;
+        name = name || userObj.nama || userObj.username || userObj.name || userObj.email;
+      } catch (e) {}
+    }
     
     if (!email) {
-      navigate('/login-member');
+      navigate('/');
       return;
     }
     

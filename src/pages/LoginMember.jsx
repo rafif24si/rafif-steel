@@ -15,9 +15,18 @@ export default function LoginMember() {
   const [loginError, setLoginError] = useState('');
 
   React.useEffect(() => {
-    const savedEmail = localStorage.getItem('userEmail');
-    if (savedEmail) {
-      navigate('/member-dashboard');
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      try {
+        const parsed = JSON.parse(savedUser);
+        if (parsed.role === 'admin') {
+          navigate('/dashboard');
+        } else {
+          navigate('/');
+        }
+      } catch (err) {
+        navigate('/');
+      }
     }
   }, [navigate]);
 
@@ -42,10 +51,15 @@ export default function LoginMember() {
         // Simpan data login
         localStorage.setItem('userEmail', loggedInUser.email);
         localStorage.setItem('userName', loggedInUser.nama || loggedInUser.username || loggedInUser.email);
+        localStorage.setItem('user', JSON.stringify(loggedInUser));
         
         // LOGIKA REDIRECT PINTAR
-        const redirectTo = location.state?.from || '/member-dashboard';
-        navigate(redirectTo);
+        if (loggedInUser.role === 'admin') {
+          navigate('/dashboard');
+        } else {
+          const redirectTo = location.state?.from || '/';
+          navigate(redirectTo);
+        }
       } else {
         setLoginError('Email atau password salah.');
         setIsSubmitting(false);
@@ -172,7 +186,7 @@ export default function LoginMember() {
           {/* Footer */}
           <p className="mt-8 text-center text-gray-500 text-sm">
             Don't have an account?{' '}
-            <Link to="/register-member" className="text-gray-900 font-semibold hover:underline underline-offset-4">
+            <Link to="/register" className="text-gray-900 font-semibold hover:underline underline-offset-4">
               Create account
             </Link>
           </p>
